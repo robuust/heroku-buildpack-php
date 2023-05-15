@@ -9,7 +9,7 @@ ENV S3_REGION=s3.eu-west-1
 ENV STACK=heroku-22
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y python3-pip
+RUN apt-get update && apt-get install -y python3-pip unixodbc-dev
 
 COPY requirements.txt /app/requirements.txt
 
