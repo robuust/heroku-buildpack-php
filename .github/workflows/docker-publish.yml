@@ -61,8 +61,8 @@ jobs:
       - name: Set up QEMU        
         uses: docker/setup-qemu-action@v2
 
-      - name: Build & deploy ext-grpc for php 8.2
-        run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/grpc-1.48.4 --overwrite
+      # - name: Build & deploy ext-grpc for php 8.2
+      #   run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/grpc-1.48.4 --overwrite
       
       - name: Build & deploy ext-grpc for php 8.2 (x86)
         run: docker run --platform=linux/amd64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/grpc-1.48.4 --name=extensions/no-debug-non-zts-20220829/grpc-1.48.4-x86 --overwrite
