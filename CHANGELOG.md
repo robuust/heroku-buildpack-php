@@ -1,5 +1,30 @@
 # heroku-buildpack-php CHANGELOG
 
+## v235 (2023-06-09)
+
+### ADD
+
+- PHP/8.0.29 [David Zuelke]
+- PHP/8.1.20 [David Zuelke]
+- PHP/8.2.7 [David Zuelke]
+- ext-newrelic/10.10.0.1 [David Zuelke]
+
+## v234 (2023-05-25)
+
+### ADD
+
+- PHP/8.1.19 [David Zuelke]
+- PHP/8.2.6 [David Zuelke]
+- ext-blackfire/1.87.2 [David Zuelke]
+- ext-mongodb/1.15.3 [David Zuelke]
+
+### CHG
+
+- Drop support for the heroku-18 stack [David Zuelke]
+- Drop support for PHP 7.1 and PHP 7.2 [David Zuelke]
+- blackfire/2.16.1 [David Zuelke]
+- Composer/2.5.7 [David Zuelke]
+
 ## v233 (2023-04-14)
 
 ### ADD
