@@ -1,5 +1,79 @@
 # heroku-buildpack-php CHANGELOG
 
+## v238 (2023-08-31)
+
+### ADD
+
+- ext-phalcon/5.3.0 [David Zuelke]
+- ext-mongodb/1.16.2 [David Zuelke]
+- ext-amqp/2.0.0 [David Zuelke]
+- PHP/8.1.23 [David Zuelke]
+- PHP/8.2.10 [David Zuelke]
+
+### CHG
+
+- Import telemetry helper shell functions previously vendored from 'lang-common' S3 bucket [David Zuelke]
+- blackfire/2.21.0 [David Zuelke]
+
+## v237 (2023-08-04)
+
+### ADD
+
+- PHP/8.0.30 [David Zuelke]
+- PHP/8.1.22 [David Zuelke]
+- PHP/8.2.9 [David Zuelke]
+- ext-phalcon/5.2.3 [David Zuelke]
+
+### CHG
+
+- blackfire/2.19.0 [David Zuelke]
+
+## v236 (2023-07-18)
+
+### ADD
+
+- PHP/8.1.21 [David Zuelke]
+- PHP/8.2.8 [David Zuelke]
+- ext-blackfire/1.88.1 [David Zuelke]
+- ext-mongodb/1.16.1 [David Zuelke]
+- ext-newrelic/10.11.0.3 [David Zuelke]
+- ext-phalcon/5.2.2 [David Zuelke]
+- ext-pq/2.2.2 [David Zuelke]
+
+### CHG
+
+- blackfire/2.17.0 [David Zuelke]
+- Composer/2.5.8 [David Zuelke]
+
+### FIX
+
+- PHP binary build formula uses outdated signature for Composer installer (#641) [David Zuelke]
+
+## v235 (2023-06-09)
+
+### ADD
+
+- PHP/8.0.29 [David Zuelke]
+- PHP/8.1.20 [David Zuelke]
+- PHP/8.2.7 [David Zuelke]
+- ext-newrelic/10.10.0.1 [David Zuelke]
+
+## v234 (2023-05-25)
+
+### ADD
+
+- PHP/8.1.19 [David Zuelke]
+- PHP/8.2.6 [David Zuelke]
+- ext-blackfire/1.87.2 [David Zuelke]
+- ext-mongodb/1.15.3 [David Zuelke]
+
+### CHG
+
+- Drop support for the heroku-18 stack [David Zuelke]
+- Drop support for PHP 7.1 and PHP 7.2 [David Zuelke]
+- blackfire/2.16.1 [David Zuelke]
+- Composer/2.5.7 [David Zuelke]
+
 ## v233 (2023-04-14)
 
 ### ADD

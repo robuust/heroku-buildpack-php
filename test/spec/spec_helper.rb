@@ -38,7 +38,8 @@ def successful_body(app, options = {})
 	retry_limit = options[:retry_limit] || 5
 	retry_interval = options[:retry_interval] || 2
 	path = options[:path] ? "/#{options[:path]}" : ''
-	Excon.get("http://#{app.name}.herokuapp.com#{path}", :idempotent => true, :expects => 200, :retry_limit => retry_limit, :retry_interval => retry_interval).body
+	web_url = app.platform_api.app.info(app.name).fetch("web_url")
+	Excon.get("#{web_url}#{path}", :idempotent => true, :expects => 200, :retry_limit => retry_limit, :retry_interval => retry_interval).body
 end
 
 def expect_exit(expect: :to, operator: :eq, code: 0)
@@ -52,18 +53,11 @@ def expect_exit(expect: :to, operator: :eq, code: 0)
 end
 
 def expected_default_php(stack)
-	case stack
-		when "heroku-18"
-			"7.4"
-		else
-			"8.2"
-	end
+	"8.2"
 end
 
 def php_on_stack?(series)
 	case ENV["STACK"]
-		when "heroku-18"
-			available = ["7.1", "7.2", "7.3", "7.4", "8.0", "8.1"]
 		when "heroku-20"
 			available = ["7.3", "7.4", "8.0", "8.1", "8.2"]
 		else

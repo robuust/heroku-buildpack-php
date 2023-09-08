@@ -1,7 +1,7 @@
 import os, sys, json, re, datetime
 
 require = json.loads(sys.argv[5]) if len(sys.argv) > 5 else {}
-stack=re.match("^([^-]+)(?:-([0-9]+))?$", os.getenv("STACK", "heroku-18"))
+stack=re.match("^([^-]+)(?:-([0-9]+))?$", os.getenv("STACK", "heroku-22"))
 require["heroku-sys/"+stack.group(1)] = "^{}.0.0".format(stack.group(2) or "1")
 
 require["heroku/installer-plugin"] = "^1.2.0"
@@ -50,7 +50,6 @@ if manifest["type"] == "heroku-sys-php":
 			"conflict": phpconflict,
 			"dist": dist,
 			"name": extname,
-			"replace": { "%s.native"%extname: "self.version" }, # if a userland package has the ext in "provide", we can later try to forcefully install the ext by requiring this replace
 			"require": require,
 			"time": phptime,
 			"type": "heroku-sys-php-extension",

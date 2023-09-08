@@ -9,7 +9,7 @@ set -eu
 # move hidden files too, just in case
 shopt -s dotglob
 
-STACK=${STACK:-heroku-18} # Anvil has none
+STACK=${STACK:-heroku-22} # Anvil has none
 build_dir=$1
 cache_dir=$2/php
 mkdir -p "$cache_dir"
@@ -25,20 +25,6 @@ source $bp_dir/bin/util/common.sh
 # use err_trap from common.sh on error
 # we do not 'set -o errtrace', because that would cause subshell failures to fire the trap twice, e.g. with someval=$(func_that_fails)
 trap 'err_trap' ERR
-
-# stdlib
-# download to a file first, as the function restarts the entire download on code 18 connection reset (not all servers support -C)
-curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --silent --location -o $bp_dir/bin/util/stdlib.sh https://lang-common.s3.us-east-1.amazonaws.com/buildpack-stdlib/v8/stdlib.sh || {
-	error <<-EOF
-		Failed to download standard library for bootstrapping!
-		
-		This is most likely a temporary internal error. If the problem
-		persists, make sure that you are not running a custom or forked
-		version of the Heroku PHP buildpack which may need updating.
-	EOF
-}
-source $bp_dir/bin/util/stdlib.sh
-rm $bp_dir/bin/util/stdlib.sh
 
 # failure counting
 source $bp_dir/bin/util/failures.sh
@@ -259,7 +245,7 @@ fi
 mkdir -p $build_dir/.heroku/php-min
 ln -s $build_dir/.heroku/php-min /app/.heroku/php-min
 
-curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --silent --location -o $build_dir/.heroku/php-min.tar.gz "${s3_url}php-min-8.1.18.tar.gz" || {
+curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --silent --location -o $build_dir/.heroku/php-min.tar.gz "${s3_url}php-min-8.1.23.tar.gz" || {
 	mcount "failures.bootstrap.download.php-min"
 	error <<-EOF
 		Failed to download minimal PHP for bootstrapping!
@@ -272,7 +258,7 @@ curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --sile
 tar xzf $build_dir/.heroku/php-min.tar.gz -C $build_dir/.heroku/php-min
 rm $build_dir/.heroku/php-min.tar.gz
 
-curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --silent --location -o $build_dir/.heroku/composer.tar.gz "${s3_url}composer-2.5.5.tar.gz" || {
+curl_retry_on_18 --retry-connrefused --retry 3 --connect-timeout 5 --fail --silent --location -o $build_dir/.heroku/composer.tar.gz "${s3_url}composer-2.5.8.tar.gz" || {
 	mcount "failures.bootstrap.download.composer"
 	error <<-EOF
 		Failed to download Composer for bootstrapping!
@@ -376,10 +362,10 @@ composer validate --no-plugins --no-check-publish --no-check-all --quiet "$COMPO
 
 status "Preparing platform package installation..."
 
-if [[ $STACK == "heroku-18" ]]; then
-	HEROKU_PHP_DEFAULT_RUNTIME_VERSION="^7.1.0"
-else
+if [[ $STACK == "heroku-20" ]]; then
 	HEROKU_PHP_DEFAULT_RUNTIME_VERSION="^7.3.0 | ^8.0.0"
+else
+	HEROKU_PHP_DEFAULT_RUNTIME_VERSION="^8.0.0"
 fi
 export HEROKU_PHP_DEFAULT_RUNTIME_VERSION
 # extract requirements from composer.lock
