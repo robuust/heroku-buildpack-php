@@ -1,5 +1,57 @@
 # heroku-buildpack-php CHANGELOG
 
+## v242 (2023-12-07)
+
+### ADD
+
+- PHP/8.3.0 [David Zuelke]
+
+## v241 (2023-11-29)
+
+- PHP/8.1.26 [David Zuelke]
+- PHP/8.2.13 [David Zuelke]
+- ext-apcu/5.1.23 [David Zuelke]
+- ext-mongodb/1.17.0 [David Zuelke]
+- ext-newrelic/10.14.0.3 [David Zuelke]
+- ext-blackfire/1.92.1 [David Zuelke]
+
+## v240 (2023-10-27)
+
+### ADD
+
+- PHP/8.1.25 [David Zuelke]
+- PHP/8.2.12 [David Zuelke]
+- ext-newrelic/10.13.0.2 [David Zuelke]
+- ext-amqp/2.1.1 [David Zuelke]
+- ext-redis/6.0.2 [David Zuelke]
+- ext-phalcon/5.4.0 [David Zuelke]
+
+### CHG
+
+- Exclude `support/{build,devcenter}/` from the packaged buildpack [Ed Morley]
+- Composer/2.6.5 [David Zuelke]
+- Apache/2.4.58 [David Zuelke]
+- blackfire/2.23.0 [David Zuelke]
+
+## v239 (2023-09-30)
+
+### ADD
+
+- PHP/8.1.24 [David Zuelke]
+- PHP/8.2.11 [David Zuelke]
+- ext-amqp/2.1.0 [David Zuelke]
+- ext-phalcon/5.3.1 [David Zuelke]
+- ext-newrelic/10.12.0.1 [David Zuelke]
+- ext-redis/6.0.1 (with lz4, lzf, zstd support enabled) [David Zuelke]
+- ext-blackfire/1.90.0 [David Zuelke]
+- Composer/1.10.27 [David Zuelke]
+- Composer/2.2.22 [David Zuelke]
+- Composer/2.6.4 [David Zuelke]
+
+### CHG
+
+- blackfire/2.22.0 [David Zuelke]
+
 ## v238 (2023-08-31)
 
 ### ADD

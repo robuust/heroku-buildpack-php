@@ -36,7 +36,7 @@ jobs:
       BLACKFIRE_SERVER_TOKEN: ${{ secrets.BLACKFIRE_SERVER_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Ruby and Bundler
         uses: ruby/setup-ruby@v1
         with:
@@ -45,12 +45,10 @@ jobs:
       - name: Install PHP and Composer
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.1"
-          tools: "composer:2.4"
+          php-version: "8.2"
+          tools: "composer:2.6"
       - name: Hatchet setup
-        run: |
-          bundle exec hatchet ci:setup
-          heroku update --version 8.1.9
+        run: bundle exec hatchet ci:setup
       - name: Export HEROKU_PHP_PLATFORM_REPOSITORIES to …-develop (since we are not building main or a tag)
         if: github.ref_type != 'tag' && github.ref_name != 'main'
         run: |
@@ -65,7 +63,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: Install Ruby and Bundler
         uses: ruby/setup-ruby@v1
         with:
