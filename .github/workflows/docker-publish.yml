@@ -41,46 +41,6 @@ jobs:
       - name: Build & deploy nginx 1.24
         run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh nginx-1.26.1 --overwrite
 
-  php81:
-    # Ensure push job passes before pushing image.
-    needs: tools
-
-    runs-on: ubuntu-latest-arm64
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Build & deploy php 8.1
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh php-8.1.29 --overwrite
-
-      - name: Build & deploy ext-imagick for php 8.1
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20210902/imagick-3.7.0 --overwrite
-
-      - name: Build & deploy ext-pcov for php 8.1
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20210902/pcov-1.0.11 --overwrite
-
-      - name: Build & deploy ext-redis for php 8.1
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20210902/redis-6.0.2 --overwrite
-
-  php82:
-    # Ensure push job passes before pushing image.
-    needs: tools
-
-    runs-on: ubuntu-latest-arm64
-    if: github.event_name == 'push'
-
-    steps:
-      - name: Build & deploy php 8.2
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh php-8.2.22 --overwrite
-
-      - name: Build & deploy ext-imagick for php 8.2
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/imagick-3.7.0 --overwrite
-
-      - name: Build & deploy ext-pcov for php 8.2
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/pcov-1.0.11 --overwrite
-
-      - name: Build & deploy ext-redis for php 8.2
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20220829/redis-6.0.2 --overwrite
-
   php83:
     # Ensure push job passes before pushing image.
     needs: tools
