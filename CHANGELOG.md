@@ -3,6 +3,23 @@
 ## [Unreleased]
 
 
+## [v257] - 2024-09-27
+
+### ADD
+
+- PHP/8.1.30 [David Zuelke]
+- PHP/8.2.24 [David Zuelke]
+- PHP/8.3.12 [David Zuelke]
+- ext-ev/1.2.0 [David Zuelke]
+- ext-blackfire/1.92.23 [David Zuelke]
+- ext-apcu/5.1.24 [David Zuelke]
+- ext-mongodb/1.20.0 [David Zuelke]
+
+### CHG
+
+- Composer/2.7.9 [David Zuelke]
+- Blackfire/2.28.12 [David Zuelke]
+
 ## [v256] - 2024-08-30
 
 ### ADD
@@ -2736,7 +2753,8 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v256...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v257...main
+[v257]: https://github.com/heroku/heroku-buildpack-php/compare/v256...v257
 [v256]: https://github.com/heroku/heroku-buildpack-php/compare/v255...v256
 [v255]: https://github.com/heroku/heroku-buildpack-php/compare/v254...v255
 [v254]: https://github.com/heroku/heroku-buildpack-php/compare/v253...v254
