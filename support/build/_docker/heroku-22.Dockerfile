@@ -1,12 +1,12 @@
-FROM heroku/heroku:22-build.v127
+FROM ghcr.io/robuust/heroku:22-build
 
 ARG TARGETARCH
 
 WORKDIR /app
 ENV WORKSPACE_DIR=/app/support/build
-ENV S3_BUCKET=lang-php
+ENV S3_BUCKET=robuust-heroku-php
 ENV S3_PREFIX=dist-heroku-22-develop/
-ENV S3_REGION=us-east-1
+ENV S3_REGION=eu-west-1
 ENV STACK=heroku-22
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -26,9 +26,9 @@ ARG S5CMD_VERSION=2.2.2
 RUN curl -sSLO https://github.com/peak/s5cmd/releases/download/v${S5CMD_VERSION}/s5cmd_${S5CMD_VERSION}_linux_${TARGETARCH}.deb
 # copy/paste relevant shasums from s5cmd_checksums.txt in the release, remember to preserve the "\\n\" at the end of each line
 RUN printf "\
-392c385320cd5ffa435759a95af77c215553d967e4b1c0fffe52e4f14c29cf85  s5cmd_${S5CMD_VERSION}_linux_amd64.deb\\n\
-939bee3cf4b5604ddb00e67f8c157b91d7c7a5b553d1fbb6890fad32894b7b46  s5cmd_${S5CMD_VERSION}_linux_arm64.deb\\n\
-" | shasum -c - --ignore-missing
+    392c385320cd5ffa435759a95af77c215553d967e4b1c0fffe52e4f14c29cf85  s5cmd_${S5CMD_VERSION}_linux_amd64.deb\\n\
+    939bee3cf4b5604ddb00e67f8c157b91d7c7a5b553d1fbb6890fad32894b7b46  s5cmd_${S5CMD_VERSION}_linux_arm64.deb\\n\
+    " | shasum -c - --ignore-missing
 
 RUN dpkg -i s5cmd_${S5CMD_VERSION}_linux_${TARGETARCH}.deb
 
