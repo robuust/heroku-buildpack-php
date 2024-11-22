@@ -1,0 +1,62 @@
+name: Docker
+
+on:
+  push:
+    # Publish `robuust` branch to Container Registry
+    branches: 'robuust'
+
+jobs:
+  # Push image to GitHub Packages.
+  # See also https://docs.docker.com/docker-hub/builds/
+  push:
+    runs-on: ubuntu-latest-arm64
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log into GitHub Container Registry
+        run: echo "${{ secrets.CR_PAT }}" | docker login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build & push image to GitHub Container Registry
+        run: docker build --pull --tag ghcr.io/robuust/heroku-php-build-heroku-22 --file $(pwd)/support/build/_docker/heroku-22.Dockerfile --push .
+
+  tools:
+    # Ensure push job passes before pushing image.
+    needs: push
+
+    runs-on: ubuntu-latest-arm64
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Build & deploy php-min 8.3
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh php-min-8.3.14 --overwrite
+
+      - name: Build & deploy composer 2.8
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh composer-2.8.3 --overwrite
+
+      - name: Build & deploy apache 2.4
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh apache-2.4.62 --overwrite
+
+      - name: Build & deploy nginx 1.24
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh nginx-1.26.2 --overwrite
+
+  php83:
+    # Ensure push job passes before pushing image.
+    needs: tools
+
+    runs-on: ubuntu-latest-arm64
+    if: github.event_name == 'push'
+
+    steps:
+      - name: Build & deploy php 8.3
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh php-8.3.14 --overwrite
+
+      - name: Build & deploy ext-imagick for php 8.3
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20230831/imagick-3.7.0 --overwrite
+
+      - name: Build & deploy ext-pcov for php 8.3
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20230831/pcov-1.0.11 --overwrite
+
+      - name: Build & deploy ext-redis for php 8.3
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-22 deploy.sh extensions/no-debug-non-zts-20230831/redis-6.1.0 --overwrite
