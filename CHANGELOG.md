@@ -3,6 +3,22 @@
 ## [Unreleased]
 
 
+## [v259] - 2024-11-21
+
+### ADD
+
+- PHP/8.1.31 [David Zuelke]
+- PHP/8.2.26 [David Zuelke]
+- PHP/8.3.14 [David Zuelke]
+- ext-rdkafka/6.0.5 [David Zuelke]
+- ext-blackfire/1.92.28 [David Zuelke]
+
+### CHG
+
+- Update internal PHP EOL info to align with 2024 updates laid out in https://wiki.php.net/rfc/release_cycle_update [David Zuelke]
+- Blackfire/2.28.19 [David Zuelke]
+- Composer/2.8.3 [David Zuelke]
+
 ## [v258] - 2024-10-31
 
 ### ADD
@@ -2772,7 +2788,8 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v258...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v259...main
+[v259]: https://github.com/heroku/heroku-buildpack-php/compare/v258...v259
 [v258]: https://github.com/heroku/heroku-buildpack-php/compare/v257...v258
 [v257]: https://github.com/heroku/heroku-buildpack-php/compare/v256...v257
 [v256]: https://github.com/heroku/heroku-buildpack-php/compare/v255...v256
