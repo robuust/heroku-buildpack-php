@@ -15,6 +15,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up QEMU        
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx        
         uses: docker/setup-buildx-action@v3
 
@@ -31,6 +34,9 @@ jobs:
     if: github.event_name == 'push'
 
     steps:
+      - name: Set up QEMU        
+        uses: docker/setup-qemu-action@v3
+
       - name: Build & deploy php 8.3
         run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh php-8.3.14 --overwrite
 
