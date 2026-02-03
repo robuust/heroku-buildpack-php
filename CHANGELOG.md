@@ -2,6 +2,328 @@
 
 ## [Unreleased]
 
+### CHG
+
+- Ignore `$WEB_CONCURRENCY` on boot if variable `$WEB_CONCURRENCY_SET_BY` indicates it was calculated by another buildpack [David Zuelke]
+- Set `$WEB_CONCURRENCY_SET_BY` in the environment on web boot if we calculated a value for `$WEB_CONCURRENCY` [David Zuelke]
+
+## [v281] - 2026-01-15
+
+### ADD
+
+- PHP/8.3.30 [David Zuelke]
+- PHP/8.4.17 [David Zuelke]
+- PHP/8.5.2 [David Zuelke]
+- ext-phalcon/5.10.0 [David Zuelke]
+- ext-blackfire/1.92.58 [David Zuelke]
+- ext-amqp/2.2.0 [David Zuelke]
+- ext-newrelic/12.4.0.29 [David Zuelke]
+
+### CHG
+
+- blackfire/2.30.1 [David Zuelke]
+- Nginx/1.28.1 [David Zuelke]
+- Composer/2.2.26 [David Zuelke]
+- Composer/2.9.3 [David Zuelke]
+- librdkafka/2.13.0 [David Zuelke]
+
+## [v280] - 2025-12-19
+
+### ADD
+
+- PHP/8.1.34 [David Zuelke]
+- PHP/8.2.30 [David Zuelke]
+- PHP/8.3.29 [David Zuelke]
+- PHP/8.4.16 [David Zuelke]
+- PHP/8.5.1 [David Zuelke]
+- ext-apcu/5.1.28 [David Zuelke]
+- ext-blackfire/1.92.53 [David Zuelke]
+
+### CHG
+
+- Apache/2.4.66 [David Zuelke]
+- blackfire/2.29.9 [David Zuelke]
+
+## [v279] - 2025-12-12
+
+### ADD
+
+- ext-oauth/2.0.10 [David Zuelke]
+- ext-blackfire/1.92.51 [David Zuelke]
+- ext-imagick/3.8.1 [David Zuelke]
+- PHP/8.5.0 [David Zuelke]
+
+### CHG
+
+- Use PHP 8.4 for bootstrapping [David Zuelke]
+- Use default value (Off) for short_open_tag PHP INI directive for 8.5+ [David Zuelke]
+
+## [v278] - 2025-11-22
+
+### ADD
+
+- PHP/8.3.28 [David Zuelke]
+- PHP/8.4.15 [David Zuelke]
+- ext-ev/1.2.2 [David Zuelke]
+- ext-redis/6.3.0 [David Zuelke]
+- ext-blackfire/1.92.50 [David Zuelke]
+- ext-newrelic/12.2.0.27 [David Zuelke]
+
+### CHG
+
+- blackfire/2.29.6 [David Zuelke]
+- Composer/2.9.2 [David Zuelke]
+
+## [v277] - 2025-10-24
+
+### ADD
+
+- PHP/8.3.27 [David Zuelke]
+- PHP/8.4.14 [David Zuelke]
+- ext-mongodb/1.21.2 [David Zuelke]
+- ext-mongodb/2.1.4 [David Zuelke]
+- ext-memcached/3.4.0 [David Zuelke]
+- ext-blackfire/1.92.48 [David Zuelke]
+- ext-grpc/1.76.0 [David Zuelke]
+
+### CHG
+
+- librdkafka/2.12.1 [David Zuelke]
+- blackfire/2.29.2 [David Zuelke]
+
+## [v276] - 2025-10-05
+
+### CHG
+
+- Automatically finish recording durations of build steps for bin/report where needed (e.g. on build failure) [David Zuelke]
+- Show linter error message if composer.json or composer.lock is malformed [David Zuelke]
+- Log reason and details for bin/report on build failure [David Zuelke]
+- Automatically log details about failures for bin/report if not handled explicitly [David Zuelke]
+- Log details about unhandled internal errors for bin/report [David Zuelke]
+
+## [v275] - 2025-09-30
+
+### ADD
+
+- PHP/8.3.26 [David Zuelke]
+- PHP/8.4.13 [David Zuelke]
+- ext-newrelic/12.1.0.26 [David Zuelke]
+- ext-grpc/1.75.0 [David Zuelke]
+- ext-blackfire/1.92.44 [David Zuelke]
+
+### CHG
+
+- blackfire/2.29.1 [David Zuelke]
+- Composer/2.8.12 [David Zuelke]
+
+## [v274] - 2025-09-19
+
+### FIX
+
+- Faulty Composer plugins printing to stdout during activation may cause build failures [David Zuelke]
+
+## [v273] - 2025-09-04
+
+### ADD
+
+- PHP/8.3.25 [David Zuelke]
+- PHP/8.4.12 [David Zuelke]
+- ext-newrelic/12.0.0.25 [David Zuelke]
+- ext-apcu/5.1.27 [David Zuelke]
+- ext-raphf/2.0.2 [David Zuelke]
+- ext-blackfire/1.92.42 [David Zuelke]
+
+### CHG
+
+- librdkafka/2.11.1 [David Zuelke]
+- Composer/2.8.11 [David Zuelke]
+- blackfire/2.29.0 [David Zuelke]
+
+## [v272] - 2025-09-02
+
+### CHG
+
+- Add new internal data store for capturing measurements at build time [Ed Morley]
+- Record basic measurements about the build (number of dependencies, PHP versions) and make them available for consumption by a build system via bin/report [David Zuelke]
+- Record durations of relevant build steps for bin/report [David Zuelke]
+- Record stats about polyfill replacement operations during platform install for bin/report [David Zuelke]
+
+## [v271] - 2025-07-31
+
+### ADD
+
+- PHP/8.3.24 [David Zuelke]
+- PHP/8.4.11 [David Zuelke]
+- ext-grpc/1.74.0 [David Zuelke]
+- ext-apcu/5.1.25 [David Zuelke]
+
+### CHG
+
+- blackfire/2.28.29 [David Zuelke]
+- Composer/2.8.10 [David Zuelke]
+- Apache/2.4.65 [David Zuelke]
+
+## [v270] - 2025-07-30
+
+### CHG
+
+- Use bootstrapped Composer and minimal PHP for internal operations even after platform packages installation [David Zuelke]
+- Ensure auto-installation of ext-blackfire and ext-newrelic even if userland polyfills are present [David Zuelke]
+- Print full package/version details on auto-installation of ext-blackfire and ext-newrelic [David Zuelke]
+- Streamline formatting and indentation for userland polyfill and ext-blackfire/ext-newrelic installation steps [David Zuelke]
+- Remove redundant printing of Composer version before userland dependency installation [David Zuelke]
+- Increase Apache HTTPD and Nginx keep-alive timeouts to 95 seconds for compatibility with Heroku Router 2.0 idle timeout of 90 seconds [David Zuelke]
+
+## [v269] - 2025-07-04
+
+### ADD
+
+- PHP/8.1.33 [David Zuelke]
+- PHP/8.2.29 [David Zuelke]
+- PHP/8.3.23 [David Zuelke]
+- PHP/8.4.10 [David Zuelke]
+- ext-mongodb/2.1.1 [David Zuelke]
+- ext-mongodb/1.21.1 [David Zuelke]
+- ext-blackfire/1.92.40 [David Zuelke]
+- ext-newrelic/11.10.0.24 [David Zuelke]
+
+### CHG
+
+- Disable ScoutAPM monitoring during builds [David Zuelke]
+- blackfire/2.28.28 [David Zuelke]
+- librdkafka/2.11.0 [David Zuelke]
+
+### FIX
+
+- Spawned background processes (e.g. ScoutAPM core-agent) may cause builds to hang forever [David Zuelke]
+
+## [v268] - 2025-06-13
+
+### ADD
+
+- PHP/8.3.22 [David Zuelke]
+- PHP/8.4.8 [David Zuelke]
+- ext-mongodb/2.1.0 [David Zuelke]
+- ext-grpc/1.73.0 [David Zuelke]
+- ext-blackfire/1.92.38 [David Zuelke]
+
+### CHG
+
+- blackfire/2.28.26 [David Zuelke]
+- librdkafka/2.10.1 [David Zuelke]
+
+## [v267] - 2025-05-15
+
+### CHG
+
+- No-change re-package [David Zuelke]
+
+## [v266] - 2025-05-15
+
+### ADD
+
+- PHP/8.3.21 [David Zuelke]
+- PHP/8.4.7 [David Zuelke]
+- ext-phalcon/5.9.3 [David Zuelke]
+- ext-grpc/1.72.0 [David Zuelke]
+- ext-newrelic/11.9.0.23 [David Zuelke]
+- ext-uuid/1.3.0 [David Zuelke]
+
+### CHG
+
+- Remove support for heroku-20 [David Zuelke]
+- Default to stable "snapshots" of platform package repositories [David Zuelke]
+- librdkafka/2.10.0 [David Zuelke]
+- Nginx/1.28.0 [David Zuelke]
+- Composer/2.8.9 [David Zuelke]
+
+## [v265] - 2025-04-11
+
+### ADD
+
+- ext-grpc/1.71.0 (for PHP 8.1 and later) [David Zuelke]
+- ext-mongodb/1.21.0 (supports PHP 8.1 and later) [David Zuelke]
+- ext-mongodb/2.0.0 (supports PHP 8.1 and later) [David Zuelke]
+- ext-newrelic/11.7.0.21 [David Zuelke]
+- ext-redis/6.2.0 [David Zuelke]
+- ext-phalcon/5.9.2 [David Zuelke]
+- PHP/8.3.20 [David Zuelke]
+- PHP/8.4.6 [David Zuelke]
+- ext-imagick/3.8.0 [David Zuelke]
+
+### CHG
+
+- Composer/2.8.8 [David Zuelke]
+
+## [v264] - 2025-03-13
+
+### ADD
+
+- PHP/8.1.32 [David Zuelke]
+- PHP/8.2.28 [David Zuelke]
+- PHP/8.3.19 [David Zuelke]
+- PHP/8.4.5 [David Zuelke]
+- ext-newrelic/11.6.0.19 [David Zuelke]
+- ext-phalcon/5.9.0 (supports PHP 8.1 through 8.4) [David Zuelke]
+
+### CHG
+
+- Composer/2.8.6 [David Zuelke]
+
+## [v263] - 2025-02-14
+
+### ADD
+
+- PHP/8.3.17 [David Zuelke]
+- PHP/8.4.4 [David Zuelke]
+
+### CHG
+
+- Composer/2.8.5 [David Zuelke]
+- Blackfire/2.28.23 [David Zuelke]
+- Nginx/1.26.3 [David Zuelke]
+- Apache/2.4.63 [David Zuelke]
+
+## [v262] - 2025-01-17
+
+### ADD
+
+- ext-newrelic/11.5.0.18 (now available for PHP 8.4) [David Zuelke]
+- ext-blackfire/1.92.32 [David Zuelke]
+- PHP/8.3.16 [David Zuelke]
+- PHP/8.4.3 [David Zuelke]
+
+### CHG
+
+- Blackfire/2.28.22 [David Zuelke]
+
+## [v261] - 2024-12-20
+
+### ADD
+
+- PHP/8.2.27 [David Zuelke]
+- PHP/8.3.15 [David Zuelke]
+- PHP/8.4.2 [David Zuelke]
+- ext-mongodb/1.20.1 [David Zuelke]
+- ext-newrelic/11.4.0.17 [David Zuelke]
+- ext-blackfire/1.92.30 [David Zuelke]
+
+### CHG
+
+- Blackfire/2.28.21 [David Zuelke]
+- Composer/2.8.4 [David Zuelke]
+
+## [v260] - 2024-12-19
+
+### ADD
+
+- ext-blackfire/1.92.29 [David Zuelke]
+- ext-pcov/1.0.12 [David Zuelke]
+- PHP/8.4.1 [David Zuelke]
+
+### CHG
+
+- Composer/2.2.25 [David Zuelke]
 
 ## [v259] - 2024-11-21
 
@@ -2788,7 +3110,29 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v259...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v281...main
+[v281]: https://github.com/heroku/heroku-buildpack-php/compare/v280...v281
+[v280]: https://github.com/heroku/heroku-buildpack-php/compare/v279...v280
+[v279]: https://github.com/heroku/heroku-buildpack-php/compare/v278...v279
+[v278]: https://github.com/heroku/heroku-buildpack-php/compare/v277...v278
+[v277]: https://github.com/heroku/heroku-buildpack-php/compare/v276...v277
+[v276]: https://github.com/heroku/heroku-buildpack-php/compare/v275...v276
+[v275]: https://github.com/heroku/heroku-buildpack-php/compare/v274...v275
+[v274]: https://github.com/heroku/heroku-buildpack-php/compare/v273...v274
+[v273]: https://github.com/heroku/heroku-buildpack-php/compare/v272...v273
+[v272]: https://github.com/heroku/heroku-buildpack-php/compare/v271...v272
+[v271]: https://github.com/heroku/heroku-buildpack-php/compare/v270...v271
+[v270]: https://github.com/heroku/heroku-buildpack-php/compare/v269...v270
+[v269]: https://github.com/heroku/heroku-buildpack-php/compare/v268...v269
+[v268]: https://github.com/heroku/heroku-buildpack-php/compare/v267...v268
+[v267]: https://github.com/heroku/heroku-buildpack-php/compare/v266...v267
+[v266]: https://github.com/heroku/heroku-buildpack-php/compare/v265...v266
+[v265]: https://github.com/heroku/heroku-buildpack-php/compare/v264...v265
+[v264]: https://github.com/heroku/heroku-buildpack-php/compare/v263...v264
+[v263]: https://github.com/heroku/heroku-buildpack-php/compare/v262...v263
+[v262]: https://github.com/heroku/heroku-buildpack-php/compare/v261...v262
+[v261]: https://github.com/heroku/heroku-buildpack-php/compare/v260...v261
+[v260]: https://github.com/heroku/heroku-buildpack-php/compare/v259...v260
 [v259]: https://github.com/heroku/heroku-buildpack-php/compare/v258...v259
 [v258]: https://github.com/heroku/heroku-buildpack-php/compare/v257...v258
 [v257]: https://github.com/heroku/heroku-buildpack-php/compare/v256...v257

@@ -18,9 +18,7 @@ def product_hash(hash)
 end
 
 RSpec.configure do |config|
-	config.filter_run focused: true unless ENV['IS_RUNNING_ON_CI']
-	config.run_all_when_everything_filtered = true
-	config.alias_example_to :fit, focused: true
+	config.filter_run_when_matching :focus
 	config.filter_run_excluding :requires_php_on_stack => lambda { |series| !php_on_stack?(series) }
 	config.filter_run_excluding :stack => lambda { |stack| !stack.include?(ENV['STACK']) }
 
@@ -57,17 +55,15 @@ def expect_exit(expect: :to, operator: :eq, code: 0)
 end
 
 def expected_default_php(stack)
-	"8.3"
+	"8.4"
 end
 
 def php_on_stack?(series)
 	case ENV["STACK"]
-		when "heroku-20"
-			available = ["7.3", "7.4", "8.0", "8.1", "8.2", "8.3"]
 		when "heroku-22"
-			available = ["8.1", "8.2", "8.3"]
+			available = ["8.1", "8.2", "8.3", "8.4", "8.5"]
 		else
-			available = ["8.2", "8.3"]
+			available = ["8.2", "8.3", "8.4", "8.5"]
 	end
 	available.include?(series)
 end
@@ -81,6 +77,38 @@ def new_app_with_stack_and_platrepo(*args, **kwargs)
 	app.before_deploy(:append) do
 		run!("cp #{__dir__}/../utils/waitforit.sh .")
 	end
+	app
+end
+
+def new_app_with_stack_and_platrepo_and_bin_report_dumper(*args, **kwargs)
+	kwargs[:buildpacks] ||= [:default]
+	kwargs[:buildpacks].prepend("heroku-community/inline")
+	app = new_app_with_stack_and_platrepo(*args, **kwargs)
+	app.before_deploy(:append) do
+		FileUtils.mkdir("bin")
+		File.open("bin/detect", "w", 0755) do |f|
+			f.write <<~EOF
+				#!/usr/bin/env bash
+				echo "Inline bin/report dumper for PHP Hatchet tests"
+			EOF
+		end
+		File.open("bin/compile", "w", 0755) do |f|
+			f.write <<~EOF
+				#!/usr/bin/env bash
+				# define EXIT trap that dumps the data ($2/$3 are expanded now)
+				# CWD is still the inline buildpacks', which is exactly what we need
+				cat > "$(pwd)/export" <<-EOX
+					trap "
+						echo -n '__BIN_REPORT_DUMP_MARKER_START__'
+						jq -cjM < '$2/build-data/php.json'
+						echo -n '__BIN_REPORT_DUMP_MARKER_END__'
+						test -s '$3/FAIL_THIS_BUILD' && exit 1 # if config var set, abort
+					" EXIT
+				EOX
+			EOF
+		end
+	end
+	app.extend(AdditionalAppMethods::AppWithBinReportDumper)
 	app
 end
 
@@ -109,5 +137,15 @@ def retry_until(options = {})
 
 		sleep options[:sleep]
 		retry
+	end
+end
+
+module AdditionalAppMethods
+	module AppWithBinReportDumper
+		def bin_report_dump
+			splits = output.split(/__BIN_REPORT_DUMP_MARKER_(START|END)__/)
+			raise IndexError, "Could not find bin/report dump in output", caller if splits.length < 5
+			JSON.parse(splits[-3]) # use the last dump - there might be multiple, since a trap prints them
+		end
 	end
 end

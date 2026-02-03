@@ -12,7 +12,6 @@ on:
         description: 'Stack to remove from'
         type: choice
         options:
-        - heroku-20
         - heroku-22
         - heroku-24-amd64
         - heroku-24-arm64
@@ -28,13 +27,13 @@ permissions:
 
 jobs:
   remove:
-    runs-on: ${{ endsWith(inputs.stack, 'arm64') && 'pub-hk-ubuntu-24.04-arm-small' || 'ubuntu-24.04' }}
+    runs-on: ${{ endsWith(inputs.stack, 'arm64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
       AWS_ACCESS_KEY_ID:  ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Expand list of manifests to remove
         run: |
           echo '## Manifests input for removal' >> "$GITHUB_STEP_SUMMARY"
@@ -42,7 +41,7 @@ jobs:
           printf -- '- `%s`\n' ${{inputs.manifests}} >> "$GITHUB_STEP_SUMMARY"
       - name: Restore cached Docker image
         id: restore-docker
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
           key: docker-cache-heroku-php-build-${{inputs.stack}}.${{github.sha}}
           path: /tmp/docker-cache.tar.gz
@@ -61,22 +60,26 @@ jobs:
         run: docker save heroku-php-build-${{inputs.stack}}:${{github.sha}} | gzip -1 > /tmp/docker-cache.tar.gz
       - name: Cache built Docker image
         if: steps.restore-docker.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
           key: ${{ steps.restore-docker.outputs.cache-primary-key }}
           path: /tmp/docker-cache.tar.gz
+      - name: Calculate formulae state Hash
+        run: |
+          echo -n "PLATFORM_REPO_SNAPSHOT_SHA256=" >> "$GITHUB_ENV"
+          support/build/_util/formulae-hash.sh >> "$GITHUB_ENV"
       - name: List packages for removal using given input list
         if: ${{ inputs.dry-run == true }}
         run: |
           set -f
           set -o pipefail
-          (yes n 2>/dev/null || true) | docker run --rm -i --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} remove.sh ${{inputs.manifests}} 2>&1 | tee remove.out
+          (yes n 2>/dev/null || true) | docker run --rm -i --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} remove.sh -c "$PLATFORM_REPO_SNAPSHOT_SHA256" ${{inputs.manifests}} 2>&1 | tee remove.out
       - name: Remove packages from repository
         if: ${{ inputs.dry-run == false }}
         run: |
           set -f
           set -o pipefail
-          (yes 2>/dev/null || true) | docker run --rm -i --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} remove.sh ${{inputs.manifests}} 2>&1 | tee remove.out
+          (yes 2>/dev/null || true) | docker run --rm -i --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} remove.sh -c "$PLATFORM_REPO_SNAPSHOT_SHA256" ${{inputs.manifests}} 2>&1 | tee remove.out
       - name: Output dry-run summary
         if: ${{ inputs.dry-run == true }}
         run: |
