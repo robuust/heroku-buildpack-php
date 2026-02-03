@@ -10,7 +10,7 @@ $sync = file_get_contents("php://stdin");
 $sections = "(IGNORED|ADDED|UPDATED|REMOVED)";
 $splits = preg_split("/^The following packages will be $sections/m", $sync, 0, PREG_SPLIT_DELIM_CAPTURE);
 
-$package_pattern = "/^\s*-\s+(?P<name>(?P<ext>ext-)?[^-]+)-(?P<version>\d+(\.\d+)+)(?(2)_php-(?P<series>\d+\.\d))\s*$/m";
+$package_pattern = "/^\s*-\s+(?P<name>(?P<ext>ext-)?[^-]+)-((?P<version>\d+(\.\d+)+)(\+.+?)?)(?(2)_php-(?P<series>\d+\.\d))\s*$/m";
 
 // the result from the splitting is a list of section outputs and captured delimiters
 // think, roughly: ["maybe some prologue text", "IGNORED", "- (none)", "ADDED", "Blah Blah\n- php-8.9.10", "UPDATED", "- (none)", "REMOVED", "- (none)"]
@@ -41,14 +41,7 @@ foreach($splits as $split) {
 			} elseif($addition["name"] == "composer") {
 				$addition["link"] = sprintf("https://getcomposer.org/changelog/%s", $addition["version"]);
 			} elseif($addition["name"] == "ext-newrelic") {
-				try {
-					$addition["link"] = vsprintf(
-						"https://docs.newrelic.com/docs/release-notes/agent-release-notes/php-release-notes/php-agent-%d-%d-%d-%d/",
-						explode(".", $addition["version"])
-					);
-				} catch(ValueError) {
-					# didn't get four version parts from the explode()
-				}
+				$addition["link"] = sprintf("https://github.com/newrelic/newrelic-php-agent/releases/tag/v%s", $addition["version"]);
 			} elseif($addition["is_ext"] && $addition["name"] != "ext-blackfire") { # blackfire doesn't have a changelog'
 				$addition["link"] = sprintf(
 					"https://pecl.php.net/package-changelog.php?package=%s&release=%s",

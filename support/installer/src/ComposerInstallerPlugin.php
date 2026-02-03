@@ -3,11 +3,14 @@
 namespace Heroku\Buildpack\PHP;
 
 use Composer\Composer;
-use Composer\IO\IOInterface;
-use Composer\Plugin\PluginInterface;
+use Composer\Factory;
+use Composer\IO\{IOInterface, ConsoleIO, NullIO};
+use Symfony\Component\Console\Helper\{HelperSet,ProgressBar};
+use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Output\StreamOutput;
+use Composer\Plugin\{PluginEvents,PluginInterface,PreFileDownloadEvent,PostFileDownloadEvent,PrePoolCreateEvent};
 use Composer\EventDispatcher\EventSubscriberInterface;
-use Composer\Installer\PackageEvent;
-use Composer\Installer\PackageEvents;
+use Composer\Installer\{InstallerEvent,InstallerEvents,PackageEvent,PackageEvents};
 use Composer\Package\PackageInterface;
 use Composer\Util\Filesystem;
 
@@ -19,17 +22,53 @@ class ComposerInstallerPlugin implements PluginInterface, EventSubscriberInterfa
 	protected $io;
 	protected $ops;
 	
+	// caller can pass us a file descriptor number for "human-readable" install info via PHP_PLATFORM_INSTALLER_DISPLAY_OUTPUT_FDNO
+	// in that case, we make this a Composer ConsoleIO instance with a StreamOutput to that FD; otherwise, it'll be a NullIO
+	protected $displayIo;
+	
 	// profile.d/ and etc/php/conf.d/ files are written with incrementing numeric prefixes by us
 	// this ensures that the shell and PHP also load these files in the order we installed them
 	protected $profileCounter = 10;
 	protected $configCounter = 10;
 	
+	protected $requestedPackages = [];
 	protected $allPlatformRequirements = null;
+	
+	protected $progressBar;
 	
 	public function activate(Composer $composer, IOInterface $io)
 	{
 		$this->composer = $composer;
 		$this->io = $io;
+		
+		// we were supplied with a file descriptor to write "display output" to
+		// this can be used by a calling buildpack to get a clean progress bar for downloads, followed by a list of package installs as they happen
+		// for this, we make a ConsoleIO instance to be passed to the downloaders for install() output, and a progress bar for our download event listeners
+		if($fdno = getenv("PHP_PLATFORM_INSTALLER_DISPLAY_OUTPUT_FDNO")) {
+			// a new <indent> tag that can be used in output to prefix a line using the specified indentation
+			// this way the progress bar, downloaders, etc, do not have to handle the indentation each
+			$styles = [
+				'indent' => new IndentedOutputFormatterStyle(intval(getenv('PHP_PLATFORM_INSTALLER_DISPLAY_OUTPUT_INDENT')))
+			];
+			// special formatter that ignores colors if false is passed as first arg, we want that initially
+			$formatter = new NoColorsOutputFormatter(false, $styles);
+			$input = new ArrayInput([]);
+			$input->setInteractive(false);
+			// obey NO_COLOR to control whether or not we want a progress bar
+			// (unfortunately, we cannot get e.g. the --no-progress or --no-ansi options from the Composer command invocation)
+			// (using $io->isDecorated() does not help either, as regular stdout/stderr might be redirected, but not our display output FD)
+			$output = new StreamOutput(fopen("php://fd/{$fdno}", "w"), StreamOutput::VERBOSITY_NORMAL, !getenv('NO_COLOR'), $formatter);
+			if($output->isDecorated()) {
+				$this->progressBar = new ProgressBar($output);
+				$progressBarFormat = ProgressBar::getFormatDefinition('normal');
+				$this->progressBar->setFormat(sprintf("<indent>Downloaded%s</indent>", $progressBarFormat));
+			}
+			// we force ANSI output to on here for the indentation output formatter style to work
+			$output->setDecorated(true);
+			$this->displayIo = new ConsoleIO($input, $output, new HelperSet());
+		} else {
+			$this->displayIo = new NullIO();
+		}
 		
 		// check if there already are scripts in .profile.d, or INI files (because we got invoked before, e.g. because this is a `composer require` to add another package after the main install), then calculate new starting point for file names
 		foreach([
@@ -48,6 +87,7 @@ class ComposerInstallerPlugin implements PluginInterface, EventSubscriberInterfa
 			'heroku-sys-tar',
 			new Downloader(
 				$io,
+				$this->displayIo,
 				$composer->getConfig(),
 				$loop->getHttpDownloader(),
 				$composer->getEventDispatcher(),
@@ -61,7 +101,9 @@ class ComposerInstallerPlugin implements PluginInterface, EventSubscriberInterfa
 			'heroku-sys-php-bundled-extension',
 			new NoopDownloader(
 				$io,
-				function($package, $path) { return 'Enabling <info>'.$package->getPrettyName().'</info> (bundled with <comment>php</comment>)'; } // the suffix string we want after our bundled ext "install"
+				$this->displayIo,
+				function($package, $path) { return sprintf('Enabling <info>%s</info> (bundled with <comment>php</comment>)', $package->getPrettyName()); }, // the Composer progress info output string we want for our bundled ext "install"
+				function($package, $path) { return sprintf('<info>%s</info> (bundled with <comment>php</comment>)', ComposerInstaller::formatHerokuSysName($package->getPrettyName())); } // the human-readable message (printed by the buildpack) we want for our bundled ext "install"
 			)
 		);
 		$composer->getInstallationManager()->addInstaller(new ComposerInstaller($io, $composer));
@@ -79,9 +121,117 @@ class ComposerInstallerPlugin implements PluginInterface, EventSubscriberInterfa
 	
 	public static function getSubscribedEvents()
 	{
-		return [PackageEvents::POST_PACKAGE_INSTALL => 'onPostPackageInstall'];
+		return [
+			PluginEvents::PRE_POOL_CREATE => 'onPrePoolCreate',
+			InstallerEvents::PRE_OPERATIONS_EXEC => 'onPreOperationsExec',
+			PluginEvents::PRE_FILE_DOWNLOAD => 'onPreFileDownload',
+			PluginEvents::POST_FILE_DOWNLOAD => 'onPostFileDownload',
+			PackageEvents::PRE_PACKAGE_INSTALL => 'onPrePackageInstall',
+			PackageEvents::POST_PACKAGE_INSTALL => 'onPostPackageInstall',
+		];
 	}
 	
+	// This does not fire on initial install, as the plugin gets installed as part of that, but the event fires before the plugin install.
+	// Just what we want, since the logic in here is for the "ext-foobar.native" install attempts after the main packages installation.
+	// For those invocations, the plugin is already enabled, and this event handler fires.
+	public function onPrePoolCreate(PrePoolCreateEvent $event)
+	{
+		// the list of explicitly requested packages from e.g. a 'composer require ext-foobar.native:*'
+		// we remember this for later, so we can output a message about already-enabled extensions
+		// this will be e.g. ["heroku-sys/ext-mbstring.native"]
+		$this->requestedPackages = $event->getRequest()->getUpdateAllowList();
+	}
+	
+	// This does not fire on initial install, as the plugin gets installed as part of that, but the event fires before the plugin install.
+	// Just what we want, since the logic in here is for the "ext-foobar.native" install attempts after the main packages installation.
+	// For those invocations, the plugin is already enabled, and this event handler fires.
+	public function onPreOperationsExec(InstallerEvent $event)
+	{
+		// From the list of operations, we are getting all packages due for install.
+		// For each package, we check the "replaces" declarations.
+		// For instance, "heroku-sys/ext-mbstring" will declare that it replaces "heroku-sys/ext-mbstring.native".
+		// The "replaces" array is keyed by "replacement destination", so it's e.g.:
+		//   {"heroku-sys/ext-mbstring.native": {Composer\Package\Link(source="heroku-sys/ext-mbstring",target="heroku-sys/ext-mbstring.native")}}
+		// For any package found here that is in the requestAllowList made in onPrePoolCreate, this means a regular installation,
+		// the Downloader will print install progress in this case.
+		// What we are really looking for, though, is packages in requestAllowList that are not in our list of operations,
+		// that means the extension is already enabled (either installed previously, or enabled in PHP by default).
+		// Because no installer event will fire in that case (nothing gets installed, after all), we want to output a message here.
+		$installs = [];
+		foreach($event->getTransaction()->getOperations() as $operation) {
+			// add the package itself, just for completeness
+			if ($operation->getOperationType() == "install") {
+				$installs[] = $operation->getPackage()->getPrettyName();
+			}
+			// add all "replace" declarations from the package
+			$installs = array_merge($installs, array_keys($operation->getPackage()->getReplaces()));
+		}
+		foreach(array_diff($this->requestedPackages, $installs) as $requestedPackageNotInstalled) {
+			$this->displayIo->write(sprintf('<indent>-</indent> <info>%s</info> (already enabled)', ComposerInstaller::formatHerokuSysName($requestedPackageNotInstalled)));
+		}
+	}
+	
+	// Because our plugin declares "plugin-modifies-downloads", Composer installs it first.
+	// After that, all other package downloads trigger this event.
+	public function onPreFileDownload(PreFileDownloadEvent $event)
+	{
+		$package = $event->getContext();
+		if($event->getType() != 'package' || $package->getDistType() != 'heroku-sys-tar') {
+			return;
+		}
+		// downloads happen in parallel, so marking progress here already would be useless
+		// but we can update the number of expected downloads on the progress bar
+		if($this->progressBar) {
+			$downloadCount = $this->progressBar->getMaxSteps();
+			if(!$downloadCount++) { // post-increment operator
+				// first invocation, we want to initialize the progress bar with a start time
+				$this->progressBar->start($downloadCount);
+				// however, our maximum step count will now increase with each onPreFileDownload
+				// that looks a little confusing if we print every time, so we clear the progress bar again immediately
+				// also useful in case our caller printed something on the same line, before the install
+				$this->progressBar->clear();
+			} else {
+				$this->progressBar->setMaxSteps($downloadCount);
+			}
+		}
+	}
+	
+	// Because our plugin declares "plugin-modifies-downloads", Composer installs it first.
+	// After that, all other package downloads trigger this event.
+	// We use it to output progress info when a download finishes
+	// (Downloader::download returns a promise for parallel downloads, so would be as useless as onPreFileDownload above)
+	public function onPostFileDownload(PostFileDownloadEvent $event)
+	{
+		if($event->getType() != 'package' || $event->getContext()->getDistType() != 'heroku-sys-tar') {
+			return;
+		}
+		if($this->progressBar) {
+			$this->progressBar->advance(); // this will re-draw for us
+		}
+	}
+	
+	// Because our plugin declares "plugin-modifies-install-path", Composer installs it first.
+	// After that, all other package installs trigger this event.
+	// Nothing to do for us here except to clear a progress bar if it exists
+	public function onPrePackageInstall(PackageEvent $event)
+	{
+		// clear our progress bar, since we're done with downloads
+		// the actual package installs are printed via the Downloaders, just like Composer does it
+		if($this->progressBar) {
+			if($this->displayIo->isDecorated()) {
+				// display output is ANSI capable, we can clear the progress bar
+				$this->progressBar->clear();
+			} else {
+				// display output is not ANSI capable, we need a line break after the progress bar
+				$this->displayIo->write("");
+			}
+			$this->progressBar = null;
+		}
+	}
+	
+	// Because our plugin declares "plugin-modifies-install-path", Composer installs it first.
+	// After that, all other package installs trigger this event.
+	// Here we do a lot of the "heavy lifting"
 	public function onPostPackageInstall(PackageEvent $event)
 	{
 		// first, load all platform requirements from all operations
@@ -198,7 +348,7 @@ class ComposerInstallerPlugin implements PluginInterface, EventSubscriberInterfa
 				// that ext is on by default or whatever
 				return;
 			}
-			
+			$this->displayIo->write(sprintf('- <info>%s</info> (bundled with <comment>%s</comment>)', ComposerInstaller::formatHerokuSysName($prettyName), $parent->getPrettyName()));
 			$this->io->writeError(sprintf('  - Enabling <info>%s</info> (bundled with <comment>%s</comment>)', $prettyName, $parent->getPrettyName()));
 			$this->io->writeError('');
 			

@@ -1,4 +1,4 @@
-%B %Y PHP updates
+PHP updates - %B %Y
 ----
 The following new [PHP runtime versions](https://devcenter.heroku.com/articles/php-support#available-versions) are now available:
 
@@ -11,10 +11,10 @@ The following [PHP extensions](https://devcenter.heroku.com/articles/php-support
 - [`ext-amqp` 2.1.2](https://pecl.php.net/package-changelog.php?package=amqp&release=2.1.2)
 - `ext-blackfire` 1.92.8
 - [`ext-event` 3.1.1](https://pecl.php.net/package-changelog.php?package=event&release=3.1.1)
-- [`ext-newrelic` 11.0.0.13](https://docs.newrelic.com/docs/release-notes/agent-release-notes/php-release-notes/php-agent-11-0-0-13/)
+- [`ext-newrelic` 11.0.0.13](https://github.com/newrelic/newrelic-php-agent/releases/tag/v11.0.0.13)
 - [`ext-phalcon` 5.6.0](https://pecl.php.net/package-changelog.php?package=phalcon&release=5.6.0)
 
-The following new [Composer versions](https://devcenter.heroku.com/articles/php-support#available-composer-versions) are now available [for use during builds](https://devcenter.heroku.com/articles/php-support#installation-of-dependencies):
+The following new [Composer versions](https://devcenter.heroku.com/articles/php-support#available-composer-versions) are now available [for use during builds](https://devcenter.heroku.com/articles/heroku-php-behavior#installation-of-dependencies):
 
 - [Composer 2.8.0](https://getcomposer.org/changelog/2.8.0)
 

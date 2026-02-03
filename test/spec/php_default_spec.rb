@@ -12,9 +12,9 @@ describe "A PHP application" do
 				next unless "heroku-22" == ENV['STACK'] # testing one stack change is enough
 				
 				expect(app.output).to include("Downloading")
-				app.update_stack("heroku-20")
-				# we are changing the stack to heroku-20, so we also need to adjust the platform repository accordingly, otherwise, for tests running on branches where HEROKU_PHP_PLATFORM_REPOSITORIES is set to a value, the build would use the wrong repo
-				app.set_config({"HEROKU_PHP_PLATFORM_REPOSITORIES" => ENV["HEROKU_PHP_PLATFORM_REPOSITORIES"].sub("heroku-22", "heroku-20")}) if ENV["HEROKU_PHP_PLATFORM_REPOSITORIES"]
+				app.update_stack("heroku-24")
+				# we are changing the stack to heroku-24, so we also need to adjust the platform repository accordingly, otherwise, for tests running on branches where HEROKU_PHP_PLATFORM_REPOSITORIES is set to a value, the build would use the wrong repo
+				app.set_config({"HEROKU_PHP_PLATFORM_REPOSITORIES" => ENV["HEROKU_PHP_PLATFORM_REPOSITORIES"].sub("heroku-22", "heroku-24-amd64")}) if ENV["HEROKU_PHP_PLATFORM_REPOSITORIES"]
 				app.commit!
 				app.push!
 				expect(app.output).to_not include("Downloading")
@@ -23,14 +23,17 @@ describe "A PHP application" do
 	end
 
 	context "with just an index.php" do
+		let(:series) { expected_default_php(ENV["STACK"]) }
+		
 		before(:all) do
-			@app = new_app_with_stack_and_platrepo('test/fixtures/default')
+			@app = new_app_with_stack_and_platrepo_and_bin_report_dumper("test/fixtures/default")
 			@app.deploy
 			
 			delimiter = SecureRandom.uuid
 			run_cmds = [
 				"php -v",
 				"env | grep COMPOSER_",
+				"cat Procfile",
 			]
 				# there are very rare cases of stderr and stdout getting read (by the dyno runner) slightly out of order
 				# if that happens, the last stderr line(s) from the program might get picked up after the next thing we echo
@@ -49,9 +52,26 @@ describe "A PHP application" do
 		end
 		
 		it "picks a default version from the expected series" do
-			series = expected_default_php(ENV["STACK"])
 			expect(@app.output).to match(/- php \(#{Regexp.escape(series)}\./)
 			expect(@run[0]).to match(/#{Regexp.escape(series)}\./)
+		end
+		
+		it "captures information about the build" do
+			expect(@app.bin_report_dump).to match(
+				"bootstrap.duration" => a_kind_of(Float),
+				"platform.prepare.duration" => a_kind_of(Float),
+				"platform.install.main.packages.installed_count" => 4,
+				"platform.install.main.duration" => a_kind_of(Float),
+				"platform.polyfill_count" => 0,
+				"platform.packages.installed_count" => 4,
+				"platform.php.version" => a_string_matching(/^#{Regexp.escape(series)}\.\d+$/),
+				"platform.php.series" => series,
+				"platform.install.duration" => a_kind_of(Float),
+				"dependencies.install.duration" => a_kind_of(Float),
+				"dependencies.packages.installed_count" => 0,
+				"apm.automagic.duration" => a_kind_of(Float),
+				"duration" => a_kind_of(Float),
+			)
 		end
 		
 		it "serves traffic" do
@@ -64,6 +84,10 @@ describe "A PHP application" do
 				.and match(/^COMPOSER_MIRROR_PATH_REPOS=1$/)
 				.and match(/^COMPOSER_NO_INTERACTION=1$/)
 				.and match(/^COMPOSER_PROCESS_TIMEOUT=0$/)
+		end
+		
+		it "writes a Procfile for the web process type" do
+			expect(@run[2]).to match("web: heroku-php-apache2")
 		end
 	end
 end
