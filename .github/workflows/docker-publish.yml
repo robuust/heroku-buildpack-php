@@ -26,7 +26,7 @@ jobs:
 
       - name: Build & push image to GitHub Container Registry
         run: docker buildx build --pull --platform=linux/arm64,linux/amd64 --tag ghcr.io/robuust/heroku-php-build-heroku-24 --file $(pwd)/support/build/_docker/heroku-24.Dockerfile --push .
-  php83:
+  php84:
     # Ensure push job passes before pushing image.
     needs: push
 
