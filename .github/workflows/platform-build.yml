@@ -2,22 +2,25 @@ name: Platform packages build and deploy to -develop/
 run-name: Build ${{ inputs.dry-run == true && 'w/o deploy' || '& deploy' }}${{ inputs.overwrite == true && '(+overwrite)' || '' }} to dist-${{inputs.stack}}-develop/
 
 env:
-  dst_path_suffix: "-stable/"
+  repo_path_suffix: "-develop/"
+  sync_dst_path_suffix: "-stable/"
 
 on:
   workflow_dispatch:
     inputs:
       formulae:
-        description: 'Shell word list of formulae to build; any Bash wildcards are allowed, e.g. "php-8.1.8 extensions/no-debug-non-zts-{2022,2021}*/newrelic-10*"'
+        description: 'Shell word list of formulae to build; any Bash wildcards are allowed, e.g. "php-8.1.8 ext-newrelic-10.*_php-8.{1,2}" (nullglob and extglob are on)'
         type: string
         required: true
       stack:
         description: 'Stack to build for'
         type: choice
         options:
-        - heroku-22
+        - heroku-22-amd64
         - heroku-24-amd64
         - heroku-24-arm64
+        - heroku-26-amd64
+        - heroku-26-arm64
         required: true
       dry-run:
         description: 'Build packages without deploying to S3 (e.g. for testing a formula)'
@@ -29,11 +32,6 @@ on:
         type: boolean
         default: false
         required: false
-      concurrency:
-        description: 'GitHub Actions runner concurrency'
-        type: number
-        default: 3
-        required: true
 
 permissions:
   contents: read
@@ -49,11 +47,11 @@ jobs:
       - id: expand-formulae
         name: Expand list of given formulae
         run: |
-          cd support/build
+          cd support/build/packages
           echo '## Formulae input for building' >> "$GITHUB_STEP_SUMMARY"
           echo -n "matrix=" >> "$GITHUB_OUTPUT"
           set -o pipefail
-          shopt -s nullglob
+          shopt -s nullglob extglob
           ls -f ${{inputs.formulae}} | xargs -n 1 echo - >> "$GITHUB_STEP_SUMMARY"
           ls -f ${{inputs.formulae}} | jq -jcRn '[inputs|select(length>0)]' >> "$GITHUB_OUTPUT"
   docker-build:
@@ -73,7 +71,7 @@ jobs:
         run: |
           shopt -s extglob
           stackname_with_architecture=${{inputs.stack}}
-          docker build --tag heroku-php-build-${stackname_with_architecture}:${{github.sha}} --file support/build/_docker/${stackname_with_architecture%-?(amd|arm)64}.Dockerfile .
+          docker build --tag heroku-php-build-${stackname_with_architecture}:${{github.sha}} --file support/build/docker/${stackname_with_architecture%-?(amd|arm)64}.Dockerfile .
       - name: Save built Docker image
         if: steps.cache-docker.outputs.cache-hit != 'true'
         run: docker save heroku-php-build-${{inputs.stack}}:${{github.sha}} | gzip -1 > /tmp/docker-cache.tar.gz
@@ -83,7 +81,6 @@ jobs:
     runs-on: ${{ endsWith(inputs.stack, '-arm64') && 'pub-hk-ubuntu-24.04-arm-xlarge' || 'pub-hk-ubuntu-24.04-xlarge' }}
     strategy:
       fail-fast: false
-      max-parallel: ${{ fromJSON(inputs.concurrency) }}
       matrix:
         formula: ${{ fromJSON(needs.formulae-list.outputs.formulae) }}
     env:
@@ -102,15 +99,28 @@ jobs:
         run: docker load -i /tmp/docker-cache.tar.gz
       - name: Build formula without deploying
         if: ${{ inputs.dry-run == true }}
-        run: docker run --rm --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} bob build ${{matrix.formula}}
-      - name: Build and deploy formula
-        if: ${{ inputs.dry-run == false && inputs.overwrite == false }}
-        run: docker run --rm --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} deploy.sh ${{matrix.formula}}
-      - name: Build and deploy(+overwrite) formula
-        if: ${{ inputs.dry-run == false && inputs.overwrite == true }}
-        run: docker run --rm --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} deploy.sh --overwrite ${{matrix.formula}}
+        run: |
+          docker run --rm --env-file=support/build/docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} deploy.sh --dry-run ${{matrix.formula}} || {
+            status=$?
+            if (( status == 9 )); then
+              echo "::notice title=Skipped formula ${{matrix.formula}}::Not available on this stack or architecture."
+            else
+              exit "$status"
+            fi
+          }
+      - name: Build and deploy${{ inputs.overwrite == true && '(+overwrite)' || '' }} formula
+        if: ${{ inputs.dry-run == false }}
+        run: |
+          docker run --rm --env-file=support/build/docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} deploy.sh ${{ inputs.overwrite == true && '--overwrite' || '' }} ${{matrix.formula}} || {
+            status=$?
+            if (( status == 9 )); then
+              echo "::notice title=Skipped formula ${{matrix.formula}}::Not available on this stack or architecture."
+            else
+              exit "$status"
+            fi
+          }
   mkrepo:
-    needs: [deploys]
+    needs: deploys
     if: ${{ inputs.dry-run == false }}
     runs-on: ${{ endsWith(inputs.stack, '-arm64') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     env:
@@ -127,21 +137,27 @@ jobs:
           fail-on-cache-miss: true
       - name: Load cached Docker image
         run: docker load -i /tmp/docker-cache.tar.gz
-      - name: Calculate formulae state Hash
-        run: |
-          echo -n "PLATFORM_REPO_SNAPSHOT_SHA256=" >> "$GITHUB_ENV"
-          support/build/_util/formulae-hash.sh >> "$GITHUB_ENV"
+      - name: Perform platform repo snapshot checks
+        id: platform-repo-snapshot-calc
+        uses: ./.github/actions/platform-repo-snapshot-calc
+        with:
+          stacks-list-for-shell-expansion: ${{ inputs.stack }}
+          repo-path-suffix: ${{ env.repo_path_suffix }}
       - name: Re-generate platform package repository
-        run: docker run --rm --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} mkrepo.sh -c "$PLATFORM_REPO_SNAPSHOT_SHA256" --upload
-      - name: Dry-run sync.sh to show package changes available for syncing to production bucket
+        run: docker run --rm --env-file=support/build/docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} mkrepo.sh -c "${{steps.platform-repo-snapshot-calc.outputs.snapshot-sha256}}" --upload
+      - name: Dry-run sync.sh to show package changes available for syncing to stable bucket
         run: |
           set -o pipefail
-          (yes n 2>/dev/null || true) | docker run --rm -i --env-file=support/build/_docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} sync.sh -c "$PLATFORM_REPO_SNAPSHOT_SHA256" lang-php dist-${{inputs.stack}}${{env.dst_path_suffix}} 2>&1 | tee sync.out
+          (yes n 2>/dev/null || true) | docker run --rm -i --env-file=support/build/docker/env.default heroku-php-build-${{inputs.stack}}:${{github.sha}} sync.sh -c "${{steps.platform-repo-snapshot-calc.outputs.snapshot-sha256}}" heroku-buildpack-php dist-${{inputs.stack}}${{env.sync_dst_path_suffix}} 2>&1 | tee sync.out
       - name: Output job summary
         run: |
-          echo '## Package changes available for syncing to production bucket' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Platform repository `…${{inputs.stack}}${{env.repo_path_suffix}}` updated' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Snapshot hash for formulae in source tree: `${{steps.platform-repo-snapshot-calc.outputs.snapshot-sha256}}`' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Snapshot repository URL: ${{steps.platform-repo-snapshot-calc.outputs.snapshot-urls}}' >> "$GITHUB_STEP_SUMMARY"
+          echo '- "Head" repository URL: ${{steps.platform-repo-snapshot-calc.outputs.urls}}' >> "$GITHUB_STEP_SUMMARY"
+          echo '## Package changes available for syncing from `…${{inputs.stack}}${{env.repo_path_suffix}}` to `…${{inputs.stack}}${{env.sync_dst_path_suffix}}`' >> "$GITHUB_STEP_SUMMARY"
           echo '> [!IMPORTANT]' >> "$GITHUB_STEP_SUMMARY"
-          echo '> **This is output from a dry-run**, no changes have been synced to production!' >> "$GITHUB_STEP_SUMMARY"
+          echo '> **This is output from a dry-run**, no changes have been synced!' >> "$GITHUB_STEP_SUMMARY"
           echo >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           sed -n '/^The following packages will/,/POTENTIALLY DESTRUCTIVE ACTION/{/POTENTIALLY DESTRUCTIVE ACTION/!p}' sync.out >> "$GITHUB_STEP_SUMMARY"
