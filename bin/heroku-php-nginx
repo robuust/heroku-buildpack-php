@@ -20,6 +20,11 @@ fi
 
 # we very likely got called via a symlink, so we have to realpath $0 first to find the base buildpack directory
 bp_dir=$(cd $(dirname $(realpath $0)); cd ..; pwd)
+# we need the "server root" for later invocation of both
+php_server_root=$(dirname "$(dirname "$(which php-fpm)")")
+web_server_root=$(dirname "$(dirname "$(which httpd)")")
+
+source "${bp_dir}/bin/util/cgroups.sh"
 
 verbose=
 conftest=
@@ -348,7 +353,7 @@ fpm_config=$(php_passthrough "$fpm_config")
 
 # we explicitly use the INI file php-fpm would load if no INI is given
 # this is to ensure that e.g. our WEB_CONCURRENCY calculation doesn't pick up a php-cli.ini
-fpm_ini=$(php-fpm -i | awk -F' => ' '/^Loaded Configuration File/{print $2}')
+fpm_ini=$(php-fpm --prefix "$php_server_root" -i | awk -F' => ' '/^Loaded Configuration File/{print $2}')
 if [[ -n ${php_config:-} || ( "$fpm_ini" != "(none)" && ${php_config:=$fpm_ini} && $verbose ) ]]; then
 	echo "Using PHP configuration (php.ini) file '${php_config#$HEROKU_APP_DIR/}'" >&2
 fi
@@ -384,24 +389,34 @@ echo -e "\n[global]\nlog_level = notice" >> "$fpm_config_tmp"
 
 # build command string arrays for PHP-FPM and Nginx
 # we're using an array, because we need to correctly preserve quoting, spaces, etc
-fpm_command=( php-fpm --pid "$fpm_pidfile" --nodaemonize -y "$fpm_config_tmp" ${php_config:+-c "$php_config"} )
-nginx_command=( nginx -c "$nginx_main" -g "pid $nginx_pidfile; include $nginx_config;" )
+fpm_command=( php-fpm --prefix "$php_server_root" --pid "$fpm_pidfile" --nodaemonize -y "$fpm_config_tmp" ${php_config:+-c "$php_config"} )
+nginx_command=( nginx -p "$web_server_root" -e "$web_server_root/var/log/nginx/error.log" -c "$nginx_main" -g "pid $nginx_pidfile; include $nginx_config;" )
 
-mlib="/sys/fs/cgroup/memory/memory.limit_in_bytes"
-if [[ -f "$mlib" ]]; then
-	[[ $verbose ]] && echo "Reading available RAM from '$mlib'" >&2
-	ram="$(cat "$mlib")"
-else
-	[[ $verbose ]] && echo "No '$mlib' with RAM info found" >&2
+ram=
+# attempt to read a "correct" limit from cgroupfs
+# this will handle cgroups v1 and v2, and, for v2, prefer memory.high over memory.max over memory.low
+if [[ -d "/proc" ]]; then # check for /proc, just in case someone is running this on e.g. macOS
+	[[ $verbose ]] && echo "Checking cgroupfs for memory limits..." >&2
+	ram=$(CGROUP_UTIL_VERBOSE=${verbose:+1} cgroup_util_find_cgroup2_memory_limit_with_fallback) || {
+		# 99 means the limit was exceeded; in verbose mode, a message was then already printed
+		if (( $? != 99)) && [[ $verbose ]]; then
+			echo "No cgroup memory limits found" >&2
+		fi
+	}
+fi
+if [[ -z "$ram" ]]; then
 	ram="512M"
 	echo "Assuming RAM to be ${ram} Bytes" >&2
 fi
+
 # read number of available processor cores in a portable (Linux, macOS, BSDs) fashion (leading underscore is not always there)
-cores=$(getconf -a | grep -E '_?NPROCESSORS_ONLN' | head -n1 | tr -s ' ' | cut -d" " -f2) || {
+# we prefer 'nproc', because that applies cgroup limits for us (e.g. when using 'docker run --cpuset-cpus=1-2'), but it's from GNU coreutils
+cores=$(set -o pipefail; nproc 2>/dev/null || getconf -a | grep -E '_?NPROCESSORS_ONLN' | head -n1 | tr -s ' ' | cut -d" " -f2) || {
 	echo "WARNING: failed to determine _NPROCESSORS_ONLN via getconf" >&2
 	cores=1
-	echo "Assuming number of CPU cores to be $cores" >&2
+	echo "Assuming number of CPU cores to be ${cores}" >&2
 }
+
 # if WEB_CONCURRENCY is not set, or an empty string, we auto-calculate it
 # if WEB_CONCURRENCY_SET_BY is set to a non-empty value, we do the same
 if [[ -z ${WEB_CONCURRENCY:-} || ${WEB_CONCURRENCY_SET_BY:-} ]]; then
@@ -504,7 +519,7 @@ fi
 # 3) as the signal to subshells, we use SIGUSR1
 # 3a) this is so subshells can tell whether we sent them the signal and they should in turn stop gracefully (SIGUSR1)...
 # 3b) ... or if something crashed, or e.g. Heroku's process manager sent SIGTERM to all processes in the group, in which case a graceful shutdown attempt is futile anyway
-# 3c) SIGINT oder SIGQUIT are not an option since backgrounded subshells cannot trap them (http://vaab.blog.kal.fr/2016/07/30/trapping-sigint-sigquit-in-asynchronous-tasks/) in Bash 3 (it works in Bash 4+ in interactive shells at least)
+# 3c) SIGINT or SIGQUIT are not an option since backgrounded subshells cannot trap them (http://vaab.blog.kal.fr/2016/07/30/trapping-sigint-sigquit-in-asynchronous-tasks/) in Bash 3 (it works in Bash 4+ in interactive shells at least)
 # 3d) because we're sending SIGUSR1 via cleanup(), we have to ignore that signal right before - otherwise, the backgrounded subshells exiting upon this exit status would cause our main process to terminate due to set -e
 # 3e) we do not simply set USR1 to ignored globally, because then we would not catch the case where something external sends a USR1 to our subshell - instead, our exit trap will fire in these cases where we did not initiate the cleanup, and tear everything down
 # 4) kill ourselves with the correct signal in case we're handling SIGTERM or, further down, SIGINT (http://www.cons.org/cracauer/sigint.html and http://mywiki.wooledge.org/SignalTrap#Special_Note_On_SIGINT1)

@@ -12,8 +12,10 @@ mkrepo_fixtures_subdir = "test/fixtures/platform/builder/mkrepo"
 priorities_fixtures_subdir = "test/fixtures/platform/repository/priorities"
 sync_fixtures_subdir = "test/fixtures/platform/builder/sync"
 
+DUMMY_PLATFORM_REPO_URL = "https://DUMMYPLATFORMHOST/DUMMYPLATFORMPATH"
+
 describe "The PHP Platform Installer" do
-	describe "composer.json Generator Script" do
+	describe "composer.json Generator Script", stack: "heroku-24" do
 		Dir.each_child(generator_fixtures_subdir) do |testcase|
 			it "produces the expected platform composer.json for case #{testcase}" do
 				bp_root = [".."].cycle("#{generator_fixtures_subdir}/#{testcase}".count("/")+1).to_a.join("/") # right "../.." sequence to get us back to the root of the buildpack
@@ -34,7 +36,7 @@ describe "The PHP Platform Installer" do
 					rescue Errno::ENOENT
 					end
 					cmd << " #{bp_root}/support/installer "
-					cmd << " https://lang-php.s3.us-east-1.amazonaws.com/dist-heroku-24-amd64-stable/packages.json " # our default repo
+					cmd << " #{DUMMY_PLATFORM_REPO_URL} " # a placeholder we will replace later for the dry-run install
 					cmd << args
 					
 					stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
@@ -55,7 +57,8 @@ describe "The PHP Platform Installer" do
 					
 					break unless status == 0
 					
-					expected_json = JSON.parse(File.read("expected_platform_composer.json"))
+					expected_platform_composer_json = File.read("expected_platform_composer.json")
+					expected_json = JSON.parse(expected_platform_composer_json)
 					generated_json = JSON.parse(stdout)
 					
 					# check all of the expected keys are there (and only those)
@@ -78,10 +81,23 @@ describe "The PHP Platform Installer" do
 					break if ["blackfire-cli-unknown", "composer1", "customrepo", "require-dev-runtime-only"].include?(testcase)
 					
 					# and finally check if it's installable in a dry run
-					cmd = "COMPOSER=expected_platform_composer.json composer install --dry-run"
-					cmd << " --no-dev" unless is_dev_install
-					stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
-					expect(status.exitstatus).to eq(0), "dry run install failed, stderr: #{stderr}, stdout: #{stdout}"
+					# we make a temp dir in the parent dir of the fixture
+					# that way, the relative paths to the installer plugin etc are correct
+					Dir.mktmpdir(testcase, "..") do |dir|
+						# mktmpdir does not actually cd to the temp dir!
+						File.open("#{dir}/composer.json", "w") do |file|
+							file.write(
+								expected_platform_composer_json.sub(
+									DUMMY_PLATFORM_REPO_URL,
+									platform_repo_from_env_or_default("heroku-24", "amd64")
+								)
+							)
+						end
+						cmd = "composer install -d #{dir} --dry-run"
+						cmd << " --no-dev" unless is_dev_install
+						stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
+						expect(status.exitstatus).to eq(0), "dry run install failed, stderr: #{stderr}, stdout: #{stdout}"
+					end
 				end
 			end
 		end
@@ -90,8 +106,7 @@ describe "The PHP Platform Installer" do
 	describe "Composer Plugin" do
 		before(:all) do
 			fixture = "test/fixtures/platform/installer/polyfills"
-			stack_with_arch = stack = ENV["STACK"] || "heroku-24"
-			stack_with_arch = "#{stack}-amd64" unless stack == "heroku-22"
+			stack = ENV["STACK"] || "heroku-24"
 			
 			@install_tmpdir = Dir.mktmpdir("install")
 			Dir.chdir(fixture) do |cwd|
@@ -101,7 +116,7 @@ describe "The PHP Platform Installer" do
 					"php",
 					"#{bp_root}/bin/util/platform.php",
 					"#{bp_root}/support/installer",
-					"https://lang-php.s3.us-east-1.amazonaws.com/dist-#{stack_with_arch}-stable/packages.json"
+					platform_repo_from_env_or_default(stack, "amd64")
 				)
 				raise unless status.success?
 				File.open("#{@install_tmpdir}/composer.json", "w") { |file| file.write(stdout) }
@@ -196,7 +211,7 @@ describe "The PHP Platform Installer" do
 			expect(@providedextensionslog_tmpfile.read)
 				.to include("symfony/polyfill-uuid heroku-sys/ext-uuid:*")
 				.and include("dummypak/ext-pq-polyfill heroku-sys/ext-pq:*")
-				.and include("dummypak/ext-imap-polyfill heroku-sys/ext-imap:8.3.0")
+				.and include("dummypak/ext-imap-polyfill heroku-sys/ext-imap:8.4.0")
 				.and include("symfony/polyfill-ctype heroku-sys/ext-ctype:*")
 		end
 		
@@ -271,7 +286,7 @@ describe "The PHP Platform Installer" do
 				bp_root = [".."].cycle("#{manifest_fixtures_subdir}/#{testcase}".count("/")+1).to_a.join("/") # right "../.." sequence to get us back to the root of the buildpack
 				Dir.chdir("#{manifest_fixtures_subdir}/#{testcase}") do |cwd|
 					cmd = File.read("ENV") # any env vars for the test (manifest.py needs STACK, S3_BUCKET, S3_PREFIX, TIME)
-					cmd << " python3 #{bp_root}/support/build/_util/include/manifest.py "
+					cmd << " python3 #{bp_root}/support/build/util/include/manifest.py "
 					cmd << File.read("ARGS")
 					stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
 				
@@ -292,7 +307,7 @@ describe "The PHP Platform Installer" do
 				bp_root = [".."].cycle("#{mkrepo_fixtures_subdir}/#{testcase}".count("/")+1).to_a.join("/") # right "../.." sequence to get us back to the root of the buildpack
 				Dir.chdir("#{mkrepo_fixtures_subdir}/#{testcase}") do |cwd|
 					
-					cmd = "S3_BUCKET=OURS3BUCKET S3_PREFIX=OURS3PREFIX/ #{bp_root}/support/build/_util/mkrepo.sh *.composer.json"
+					cmd = "S3_BUCKET=OURS3BUCKET S3_PREFIX=OURS3PREFIX/ S3_REGION=us-east-1 #{bp_root}/support/build/util/mkrepo.sh *.composer.json"
 					stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
 					
 					expect(status.exitstatus).to eq(0), "mkrepo.sh failed, stdout: #{stdout}, stderr: #{stderr}"
@@ -310,7 +325,7 @@ describe "The PHP Platform Installer" do
 		it "produces the expected list of operations when syncing between two repositories" do
 			bp_root = [".."].cycle("#{sync_fixtures_subdir}".count("/")+1).to_a.join("/") # right "../.." sequence to get us back to the root of the buildpack
 			Dir.chdir("#{sync_fixtures_subdir}") do |cwd|
-				cmd = "python3 #{bp_root}/support/build/_util/include/sync.py --dry-run us-east-1 lang-php dist-heroku-24-develop/ manifests-src/ us-east-1 lang-php dist-heroku-24-stable/ manifests-dst/"
+				cmd = "python3 #{bp_root}/support/build/util/include/sync.py --dry-run us-east-1 heroku-buildpack-php dist-heroku-24-develop/ manifests-src/ us-east-1 heroku-buildpack-php dist-heroku-24-stable/ manifests-dst/"
 				stdout, stderr, status = Open3.capture3("bash -c #{Shellwords.escape(cmd)}")
 				
 				expect(status.exitstatus).to eq(0), "sync.py failed, stdout: #{stdout}, stderr: #{stderr}"
@@ -319,7 +334,7 @@ describe "The PHP Platform Installer" do
 				generated_json = JSON.parse(stdout)
 				
 				# compare sorted list of operations (sync.py processes in no defined order)
-				expect(expected_json.sort_by(&:zip)).to eq(generated_json.sort_by(&:zip))
+				expect(generated_json.sort_by(&:zip)).to eq(expected_json.sort_by(&:zip))
 			end
 		end
 	end
@@ -379,12 +394,12 @@ describe "The PHP Platform Installer" do
 					expect(app.output).to include("detected userland polyfill packages for PHP extensions")
 					expect(app.output).not_to include("- ext-mbstring") # ext not required by any dependency, so should not be installed or even attempted ("- ext-mbstring...")
 					out_before_polyfills, out_after_polyfills = app.output.split("detected userland polyfill packages for PHP extensions", 2)
-					expect(out_before_polyfills).to include("- php (8.3")
+					expect(out_before_polyfills).to include("- php (8.4")
 					expect(out_after_polyfills).to include("- ext-ctype (already enabled)")
 					expect(out_after_polyfills).to include("- ext-raphf (") # ext-pq, which we required, depends on it
 					expect(out_after_polyfills).to include("- ext-pq (")
 					expect(out_after_polyfills).to include("- ext-uuid (")
-					expect(out_after_polyfills).to include("- ext-imap (bundled with php)")
+					expect(out_after_polyfills).to include("- ext-imap (")
 					
 					expect(app.bin_report_dump).to match(
 						"bootstrap.duration" => a_kind_of(Float),
