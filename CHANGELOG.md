@@ -2,6 +2,85 @@
 
 ## [Unreleased]
 
+
+## [v287] - 2026-04-17
+
+### CHG
+
+- Add support for Heroku-26. ([#930](https://github.com/heroku/heroku-buildpack-php/pull/930))
+- Rebuilt Apache 2.4.66 with updated APR (1.6.3 -> 1.7.6) and APR-util (1.6.1 -> 1.6.3). ([#939](https://github.com/heroku/heroku-buildpack-php/pull/939))
+- Make buildpack exit trap compatible with Bash 5.3. ([#936](https://github.com/heroku/heroku-buildpack-php/pull/936))
+
+## [v286] - 2026-04-15
+
+### CHG
+
+- PHP/8.5.5
+- PHP/8.4.20
+- ext-blackfire/2026.4.0
+- ext-grpc/1.80.0
+- ext-newrelic/12.6.0.34
+- ext-phalcon/5.11.1
+- nginx/1.30.0
+- Composer/2.2.27
+- Composer/2.9.7
+- blackfire/2026.4.1
+- librdkafka/2.14.0
+
+## [v285] - 2026-03-17
+
+### ADD
+
+- PHP/8.4.19
+- PHP/8.5.4
+- ext-blackfire/1.92.60
+- ext-ev/1.2.3
+- ext-mongodb/1.21.5
+- ext-grpc/1.78.0
+- ext-newrelic/12.5.0.30
+- ext-mongodb/2.2.1
+
+### CHG
+
+- Support non-`heroku-sys-…` type packages in platform repositories
+- Make Composer Installer Plugin a package in platform repository (for use by the PHP CNB)
+- Make web server boot scripts (`heroku-php-apache2` and `heroku-php-nginx`) and configs a package in platform repository (for use by the PHP CNB)
+- Include minimal bootstrapping PHP package (not installable) in platform repository (for use by the PHP CNB)
+- Composer/2.9.5
+- nginx/1.28.2
+- librdkafka/2.13.2
+- blackfire/2026.3.0
+
+## [v284] - 2026-03-17
+
+### ADD
+
+- Read memory limits from cgroups (v1 or v2) in boot scripts (#699) [David Zuelke]
+- Read CPU core count from cgroups (v1 or v2) via `nproc` in boot scripts [David Zuelke]
+
+### CHG
+
+- Unify ComposerInstallerPlugin for Classic and CNB [David Zuelke]
+- Change the S3 URLs used for downloads to use AWS' dual-stack (IPv6 compatible) endpoint.
+- Re-structure platform package formulae [David Zuelke]
+- Auto-determine version of minimal PHP and Composer for bootstrapping from local packages definition [David Zuelke]
+- Switch from S3 bucket `lang-php` to `heroku-buildpack-php` [David Zuelke]
+- Adjust `heroku-22` S3 bucket paths to use `-amd64` architecture suffix, like `heroku-24` [David Zuelke]
+
+### FIX
+
+- Packages with build metadata in version strings (e.g. `php-8.5.3+heroku1`) have incorrectly encoded dist URLs in manifest [David Zuelke]
+- Fix realpath warning during test startup in Heroku CI runs [David Zuelke]
+
+## [v283] - 2026-02-18
+
+### ADD
+
+- PHP/8.4.18 [David Zuelke]
+- PHP/8.5.3 [David Zuelke]
+
+## [v282] - 2026-02-16
+
 ### CHG
 
 - Ignore `$WEB_CONCURRENCY` on boot if variable `$WEB_CONCURRENCY_SET_BY` indicates it was calculated by another buildpack [David Zuelke]
@@ -1070,7 +1149,7 @@
 
 ## [v203] - 2021-12-17
 
-## ADD
+### ADD
 
 - PHP/7.4.27 [David Zuelke]
 - PHP/8.0.14 [David Zuelke]
@@ -1080,7 +1159,7 @@
 - ext-psr/1.1.0 (for PHP 7.2) [David Zuelke]
 - ext-psr/1.2.0 (for PHP 7.3+) [David Zuelke]
 
-## [v202] - 2012-12-10
+## [v202] - 2021-12-10
 
 ### ADD
 
@@ -1761,7 +1840,7 @@
 
 - Enable zend.assertions on Heroku CI [David Zuelke]
 - Boot scripts now prefer a `composer` binary on `$PATH` over a `composer.phar` in the CWD [David Zuelke]
-- Refactor logic used to prevent APM extensions such as `ext-newrelic` or `ext-blackfire` from starting up during during boot preparations or builds [David Zuelke]
+- Refactor logic used to prevent APM extensions such as `ext-newrelic` or `ext-blackfire` from starting up during boot preparations or builds [David Zuelke]
 - Patch `libc-client`, used by PHP's `ext-imap`, to use SNI if possible (required with TLSv1.3) [David Zuelke]
 - Composer/1.9.0 [David Zuelke]
 
@@ -1977,7 +2056,7 @@
 - Translate `NEW_RELIC_LOG_LEVEL` values "verbose" and "verbosedebug" to "debug" for `newrelic-daemon` [David Zuelke]
 - librdkafka/0.11.6 [David Zuelke]
 
-## [v145] - 2019-10-16
+## [v145] - 2018-10-16
 
 ### ADD
 
@@ -1992,7 +2071,7 @@
 
 - Nginx reports "localhost" instead of requested hostname in SERVER_NAME FastCGI variable (#264) [David Zuelke]
 
-## [v144] - 2019-09-13
+## [v144] - 2018-09-13
 
 ### ADD
 
@@ -2036,7 +2115,7 @@
 
 ### CHG
 
-- Verbose error messasge on `bin/detect` failure [David Zuelke]
+- Verbose error message on `bin/detect` failure [David Zuelke]
 - Emit brief warnings for common regexed build failure cases [David Zuelke]
 - Run most internal 'composer' invocations using '--no-plugins' [David Zuelke]
 - Composer/1.7.1 [David Zuelke]
@@ -2934,7 +3013,7 @@
 
 ### FIX
 
-- Apache `mod_proxy_fgci`'s "disablereuse=off" config flag causes intermittent blank pages with HTTPD 2.4.11+ [David Zuelke]
+- Apache `mod_proxy_fcgi`'s "disablereuse=off" config flag causes intermittent blank pages with HTTPD 2.4.11+ [David Zuelke]
 - Applications on cedar-10 can select non-existing PHP 7.0.0beta1 package via composer.json [David Zuelke]
 
 ## [v70] - 2015-07-10
@@ -3037,7 +3116,7 @@
 
 ### FIX
 
-- Incorrect 'child 123 said into stderr' removal for lines that are deemed to long by FPM and cut off using a terminating '...' sequence instead of closing double quotes [David Zuelke]
+- Incorrect 'child 123 said into stderr' removal for lines that are deemed too long by FPM and cut off using a terminating '...' sequence instead of closing double quotes [David Zuelke]
 
 ## [v62] - 2015-02-04
 
@@ -3110,7 +3189,13 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v281...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v287...main
+[v287]: https://github.com/heroku/heroku-buildpack-php/compare/v286...v287
+[v286]: https://github.com/heroku/heroku-buildpack-php/compare/v285...v286
+[v285]: https://github.com/heroku/heroku-buildpack-php/compare/v284...v285
+[v284]: https://github.com/heroku/heroku-buildpack-php/compare/v283...v284
+[v283]: https://github.com/heroku/heroku-buildpack-php/compare/v282...v283
+[v282]: https://github.com/heroku/heroku-buildpack-php/compare/v281...v282
 [v281]: https://github.com/heroku/heroku-buildpack-php/compare/v280...v281
 [v280]: https://github.com/heroku/heroku-buildpack-php/compare/v279...v280
 [v279]: https://github.com/heroku/heroku-buildpack-php/compare/v278...v279

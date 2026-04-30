@@ -58,14 +58,25 @@ def expected_default_php(stack)
 	"8.4"
 end
 
+# Keep this list in sync with the supported_series values in support/build/formulae/php
 def php_on_stack?(series)
-	case ENV["STACK"]
+	case stack = ENV["STACK"]
 		when "heroku-22"
 			available = ["8.1", "8.2", "8.3", "8.4", "8.5"]
-		else
+		when "heroku-24"
 			available = ["8.2", "8.3", "8.4", "8.5"]
+		when "heroku-26"
+			available = ["8.4", "8.5"]
+		else
+			raise "Unknown stack: #{stack}"
 	end
 	available.include?(series)
+end
+
+def platform_repo_from_env_or_default(stack, arch)
+	repos = ENV.fetch("HEROKU_PHP_PLATFORM_REPOSITORIES", "https://heroku-buildpack-php.s3.dualstack.us-east-1.amazonaws.com/dist-#{stack}-#{arch}-stable/packages.json")
+	# the env var will typically start with a "-" reset entry; we just want the last entry
+	repos.split.last
 end
 
 def new_app_with_stack_and_platrepo(*args, **kwargs)
