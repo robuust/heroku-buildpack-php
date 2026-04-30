@@ -41,7 +41,7 @@ jobs:
         run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh php-8.4.20 --overwrite
 
       - name: Build & deploy ext-pdo_sqlsrv for php 8.4
-        run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh extensions/no-debug-non-zts-20240924/pdo_sqlsrv-5.13.1 --overwrite
+        run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh packages/ext-pdo_sqlsrv-5.13.1_php-8.4 --overwrite
   php84_x86:
     needs: php84
 
@@ -50,7 +50,7 @@ jobs:
 
     steps:
       - name: Build & deploy ext-pdo_sqlsrv for php 8.4 (x86)
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh extensions/no-debug-non-zts-20240924/pdo_sqlsrv-5.13.1 --name=extensions/no-debug-non-zts-20240924/pdo_sqlsrv-5.13.1-x86 --overwrite
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh packages/ext-pdo_sqlsrv-5.13.1_php-8.4 --name=extensions/no-debug-non-zts-20240924/pdo_sqlsrv-5.13.1-x86 --overwrite
   php85:
     # Ensure push job passes before pushing image.
     needs: push
@@ -66,7 +66,7 @@ jobs:
         run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh php-8.5.5 --overwrite
 
       - name: Build & deploy ext-pdo_sqlsrv for php 8.5
-        run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh extensions/no-debug-non-zts-20250925/pdo_sqlsrv-5.13.1 --overwrite
+        run: docker run --platform=linux/arm64 --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh packages/ext-pdo_sqlsrv-5.13.1_php-8.5 --overwrite
   php85_x86:
     needs: php85
 
@@ -75,4 +75,4 @@ jobs:
 
     steps:
       - name: Build & deploy ext-pdo_sqlsrv for php 8.5 (x86)
-        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh extensions/no-debug-non-zts-20250925/pdo_sqlsrv-5.13.1 --name=extensions/no-debug-non-zts-20250925/pdo_sqlsrv-5.13.1-x86 --overwrite
+        run: docker run --rm -e AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}" -e AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}" ghcr.io/robuust/heroku-php-build-heroku-24 deploy.sh packages/ext-pdo_sqlsrv-5.13.1_php-8.5 --name=extensions/no-debug-non-zts-20250925/pdo_sqlsrv-5.13.1-x86 --overwrite
