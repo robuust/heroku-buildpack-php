@@ -8,9 +8,9 @@ USER root
 
 WORKDIR /app
 ENV WORKSPACE_DIR=/app/support/build/packages
-ENV S3_BUCKET=heroku-buildpack-php
-ENV S3_PREFIX=dist-heroku-26-${TARGETARCH}-develop/
-ENV S3_REGION=us-east-1
+ENV S3_BUCKET=robuust-heroku-php
+ENV S3_PREFIX=dist-heroku-26-develop/
+ENV S3_REGION=eu-west-1
 ENV STACK=heroku-26
 ENV DEBIAN_FRONTEND=noninteractive
 
