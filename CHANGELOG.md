@@ -3,6 +3,102 @@
 ## [Unreleased]
 
 
+## [v294] - 2026-07-31
+
+### ADD
+
+- PHP/8.2.33
+- PHP/8.3.33
+- PHP/8.4.24
+- PHP/8.5.9
+- ext-event/3.1.6
+- ext-grpc/1.83.0
+- ext-newrelic/12.9.0.38
+- ext-phalcon/5.17.0
+- ext-blackfire/2026.7.1
+
+### CHG
+
+- blackfire/2026.7.0
+- nginx/1.30.4
+- `ext-phalcon` is now available on Heroku-26 (PHP 8.4 and 8.5). ([#927](https://github.com/heroku/heroku-buildpack-php/issues/927))
+
+## [v293] - 2026-07-08
+
+### ADD
+
+- PHP/8.2.32
+- PHP/8.3.32
+- PHP/8.4.23
+- PHP/8.5.8
+- ext-grpc/1.82.0
+- ext-newrelic/12.8.0.37
+- ext-blackfire/2026.7.0
+- ext-phalcon/5.16.0
+
+### CHG
+
+- blackfire/2026.6.1
+- nginx/1.30.3
+- Composer/2.10.2
+- librdkafka/2.15.0
+
+## [v292] - 2026-06-09
+
+### ADD
+
+- PHP/8.5.7
+- PHP/8.4.22
+- ext-blackfire/2026.5.0
+- ext-mongodb/2.3.3
+- ext-newrelic/12.7.0.36
+- ext-grpc/1.81.0
+- ext-phalcon/5.13.0
+- Composer/2.10.1
+
+### CHG
+
+- Apache/2.4.68
+- Composer/2.2.28
+- Composer/2.9.8
+- blackfire/2026.6.0
+- librdkafka/2.14.2
+
+## [v291] - 2026-05-26
+
+### CHG
+
+- nginx/1.30.2
+
+## [v290] - 2026-05-21
+
+### CHG
+
+- nginx/1.30.1
+
+## [v289] - 2026-05-19
+
+### CHG
+
+- Allow PHP 8.5 for apps that do not explicitly require a PHP version.
+
+## [v288] - 2026-05-12
+
+### ADD
+
+- PHP/8.5.6
+- PHP/8.4.21
+- PHP/8.3.31
+- PHP/8.2.31
+- ext-blackfire/2026.4.1
+- ext-mongodb/2.3.1
+
+### CHG
+
+- Apache/2.4.67
+- blackfire/2026.4.2
+- librdkafka/2.14.1
+
 ## [v287] - 2026-04-17
 
 ### CHG
@@ -3189,7 +3285,14 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v287...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v294...main
+[v294]: https://github.com/heroku/heroku-buildpack-php/compare/v293...v294
+[v293]: https://github.com/heroku/heroku-buildpack-php/compare/v292...v293
+[v292]: https://github.com/heroku/heroku-buildpack-php/compare/v291...v292
+[v291]: https://github.com/heroku/heroku-buildpack-php/compare/v290...v291
+[v290]: https://github.com/heroku/heroku-buildpack-php/compare/v289...v290
+[v289]: https://github.com/heroku/heroku-buildpack-php/compare/v288...v289
+[v288]: https://github.com/heroku/heroku-buildpack-php/compare/v287...v288
 [v287]: https://github.com/heroku/heroku-buildpack-php/compare/v286...v287
 [v286]: https://github.com/heroku/heroku-buildpack-php/compare/v285...v286
 [v285]: https://github.com/heroku/heroku-buildpack-php/compare/v284...v285
