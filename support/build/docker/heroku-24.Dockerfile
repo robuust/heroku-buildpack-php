@@ -14,7 +14,7 @@ ENV S3_REGION=eu-west-1
 ENV STACK=heroku-24
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update && apt-get install -y python3-pip python3-venv
+RUN apt-get update && apt-get install -y python3-pip python3-venv unixodbc-dev
 
 ENV VIRTUAL_ENV=/app/.venv
 RUN python3 -m venv "$VIRTUAL_ENV"

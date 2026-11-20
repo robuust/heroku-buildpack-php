@@ -3,6 +3,81 @@
 ## [Unreleased]
 
 
+## [v298] - 2026-10-21
+
+### ADD
+
+- PHP/8.2.35
+- PHP/8.3.36
+- PHP/8.4.27
+- PHP/8.5.12
+- ext-blackfire/2026.10.2
+- ext-mongodb/1.21.12
+- ext-mongodb/2.5.5
+- ext-phalcon/5.23.0
+
+### CHG
+
+- Apache/2.4.69
+- nginx/1.30.6
+- librdkafka/2.16.0
+- blackfire/2026.10.0
+
+### FIX
+
+- Patched PHP 8.1.34 for CVE-2026-109618 and CVE-2026-109619 using the PHP project's backport for end-of-life versions.
+
+## [v297] - 2026-09-25
+
+### ADD
+
+- PHP/8.2.34
+- PHP/8.3.35
+- PHP/8.4.26
+- PHP/8.5.11
+- ext-blackfire/2026.9.2
+- ext-grpc/1.84.0
+- ext-mongodb/1.21.10
+- ext-mongodb/2.5.3
+- ext-newrelic/12.11.0.40
+- ext-phalcon/5.22.0
+
+### CHG
+
+- nginx/1.30.5
+- librdkafka/2.15.1
+- blackfire/2026.9.1
+
+## [v296] - 2026-09-24
+
+### CHG
+
+- Applied additional `curl` best practices such as request timeouts, retries and clearer error output. ([#991](https://github.com/heroku/heroku-buildpack-php/pull/991))
+
+### FIX
+
+- Fixed a permission error writing platform installer diagnostics to `/dev/stderr` when running as an unprivileged user, such as under herokuish. ([#981](https://github.com/heroku/heroku-buildpack-php/pull/981))
+
+## [v295] - 2026-09-02
+
+### ADD
+
+- PHP/8.4.25
+- PHP/8.5.10
+- ext-mongodb/1.21.7
+- ext-mongodb/2.4.1
+- ext-grpc/1.83.1
+- ext-phalcon/5.20.3
+- ext-newrelic/12.10.0.39
+- ext-blackfire/2026.8.8
+
+### CHG
+
+- blackfire/2026.8.1
+- composer/2.2.30
+- composer/2.10.3
+
+
 ## [v294] - 2026-07-31
 
 ### ADD
@@ -3285,7 +3360,11 @@
 
 - Auto-set and follow (but not enable, for now) the FPM slowlog [David Zuelke]
 
-[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v294...main
+[unreleased]: https://github.com/heroku/heroku-buildpack-php/compare/v298...main
+[v298]: https://github.com/heroku/heroku-buildpack-php/compare/v297...v298
+[v297]: https://github.com/heroku/heroku-buildpack-php/compare/v296...v297
+[v296]: https://github.com/heroku/heroku-buildpack-php/compare/v295...v296
+[v295]: https://github.com/heroku/heroku-buildpack-php/compare/v294...v295
 [v294]: https://github.com/heroku/heroku-buildpack-php/compare/v293...v294
 [v293]: https://github.com/heroku/heroku-buildpack-php/compare/v292...v293
 [v292]: https://github.com/heroku/heroku-buildpack-php/compare/v291...v292
