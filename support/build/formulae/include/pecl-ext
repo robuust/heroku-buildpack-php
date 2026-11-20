@@ -18,12 +18,12 @@ dep_build=${dep_build%"_php-${series}"} # strip "_php-x.y" suffix from end
 dep_version=${dep_build%%"+"*} # strip build metadata off the end of the version
 dep_dirname=${dep_name#"ext-"}-${dep_version}
 dep_archive_name=${dep_dirname}.tgz
-dep_url=https://pecl.php.net/get/${dep_archive_name}
+dep_url=${SOURCE_URL:-https://pecl.php.net/get/${dep_archive_name}}
 dep_manifest=${dep_package}.composer.json
 
-echo "-----> Building ${dep_name} (${dep_version}, for PHP ${series}) from PECL..."
+echo "-----> Building ${dep_name} (${dep_version}, for PHP ${series}) from ${dep_url}..."
 
-curl -L ${dep_url} | tar xz
+curl --fail -L "${dep_url}" | tar xz ${TAR_EXTRA:-}
 
 pushd ${dep_dirname}
 phpize
